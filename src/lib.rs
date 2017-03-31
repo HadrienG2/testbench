@@ -12,23 +12,11 @@ use std::time::Instant;
 ///
 /// This is most certainly ugly. But for now, it's the best that I thought of.
 ///
-#[allow(unused_variables)]
 pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
-    counting_benchmark(num_iterations, |iter| iteration());
-}
-
-
-/// This is variant of "benchmark" where the user-provided operation is provided
-/// with an "iteration number", starting at 1, which may be used to do slightly
-/// different things on each iteration, thusly silencing some hardware and
-/// compiler performance optimizations. It's not perfect, but can help.
-///
-pub fn counting_benchmark<F: FnMut(u32)>(num_iterations: u32,
-                                         mut iteration: F) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
-    for iter in 1..num_iterations {
-        iteration(iter)
+    for iter in 0..num_iterations {
+        iteration()
     }
     let total_duration = start_time.elapsed();
 
@@ -55,6 +43,9 @@ pub fn counting_benchmark<F: FnMut(u32)>(num_iterations: u32,
            iter_ns,
            iter_ns_fraction);
 }
+
+
+/// TODO: Concurrent benchmark
 
 
 #[cfg(test)]
