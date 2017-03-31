@@ -1,5 +1,10 @@
-use std::time::Instant;
+use std::sync::{Arc, Barrier};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+use std::time::{Duration, Instant};
 
+/// Microbenchmark some simple operation by running it N times
+///
 /// This simple benchmark harness is meant as a cheap and hackish substitute for
 /// cargo benchmarks in Stable Rust. It runs a user-provided operation a certain
 /// number of times and measures how much time it takes.
@@ -10,7 +15,7 @@ use std::time::Instant;
 ///
 ///   $ cargo test --release -- --ignored --nocapture --test-threads=1
 ///
-/// This is most certainly ugly. But for now, it's the best that I thought of.
+/// This is a dreadful hack. But for now, it's the best that I've thought of.
 ///
 pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
     // Run the user-provided operation in a loop
@@ -45,9 +50,54 @@ pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
 }
 
 
-/// TODO: Concurrent benchmark
+/// Microbenchmark some operation while another is running in a loop
+///
+/// For multithreaded code, benchmarking the performance of isolated operations
+/// is usually only half of the story. Synchronization and memory contention can
+/// also have a large impact on performance.
+///
+/// For this reason, it is often useful to also measure the performance of one
+/// operation as another "antagonist" operation is also running in a background
+/// thread. This function implements such concurrent benchmarking.
+///
+pub fn concurrent_benchmark<F, A>(num_iterations: u32,
+                                  iteration_func: F,
+                                  mut antagonist_func: A)
+    where F: FnMut(),
+          A: FnMut() + Send + 'static
+{
+    // Setup a barrier to synchronize benchmark and antagonist startup
+    let barrier = Arc::new(Barrier::new(2));
+
+    // Setup an atomic "continue" flag to shut down the antagonist at
+    // the end of the benchmarking procedure
+    let run_flag = Arc::new(AtomicBool::new(true));
+
+    // Schedule the antagonist thread
+    let (a_barrier, a_run_flag) = (barrier.clone(), run_flag.clone());
+    let antagonist = thread::spawn(
+        move || {
+            a_barrier.wait();
+            while a_run_flag.load(Ordering::Relaxed) {
+                antagonist_func();
+            }
+        }
+    );
+
+    // Wait for the antagonist to be running, and give it some headstart
+    barrier.wait();
+    thread::sleep(Duration::from_millis(10));
+
+    // Run the benchmark
+    benchmark(num_iterations, iteration_func);
+
+    // Stop the antagonist and check that nothing went wrong on its side
+    run_flag.store(false, Ordering::Relaxed);
+    antagonist.join().unwrap();
+}
 
 
+/// TODO: Just an usage example, should probably be improved
 #[cfg(test)]
 mod benchs {
     use std::time::Instant;
