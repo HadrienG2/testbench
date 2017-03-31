@@ -15,7 +15,7 @@ use std::time::Instant;
 pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
-    for iter in 0..num_iterations {
+    for _ in 0..num_iterations {
         iteration()
     }
     let total_duration = start_time.elapsed();
