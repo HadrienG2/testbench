@@ -1,23 +1,30 @@
 use std::time::Instant;
 
 /// This simple benchmark harness is meant as a cheap and hackish substitute for
-/// cargo benchmarks in Stable Rust. It runs a user-provided operation in a loop
-/// and measures how much time it takes.
+/// cargo benchmarks in Stable Rust. It runs a user-provided operation a certain
+/// number of times and measures how much time it takes.
 ///
 /// To use it, write your benchmark as an ignored cargo test, put a call to
-/// benchmark() or benchmark_identical() as the last operation, and tell your
+/// benchmark() or counting_benchmark() as the last operation, and tell your
 /// user to run the benchmarks via:
 ///
-///     cargo test --release -- --ignored --nocapture --test-threads=1
+///   $ cargo test --release -- --ignored --nocapture --test-threads=1
 ///
 /// This is most certainly ugly. But for now, it's the best that I thought of.
 ///
-/// The user-provided operation is provided, on each iteration, an "iteration
-/// number", starting at 1, which may be used to do slightly different things on
-/// each iteration, thusly defeating some hardware and compiler performance
-/// optimizations. It's certainly not fool-proof, but it can help.
+#[allow(unused_variables)]
+pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
+    counting_benchmark(num_iterations, |iter| iteration());
+}
+
+
+/// This is variant of "benchmark" where the user-provided operation is provided
+/// with an "iteration number", starting at 1, which may be used to do slightly
+/// different things on each iteration, thusly silencing some hardware and
+/// compiler performance optimizations. It's not perfect, but can help.
 ///
-fn benchmark<F: FnMut(u32)>(num_iterations: u32, mut iteration: F) {
+pub fn counting_benchmark<F: FnMut(u32)>(num_iterations: u32,
+                                         mut iteration: F) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
     for iter in 1..num_iterations {
@@ -49,22 +56,15 @@ fn benchmark<F: FnMut(u32)>(num_iterations: u32, mut iteration: F) {
            iter_ns_fraction);
 }
 
-/// This is a version of "benchmark" which does not expose an explicit iteration
-/// number, for scenarios where the user really wants to do exactly the same
-/// thing on every benchmark iteration.
-#[allow(unused_variables)]
-fn benchmark_identical<F: FnMut()>(num_iterations: u32, mut iteration: F) {
-    benchmark(num_iterations, |iter| iteration());
-}
-
 
 #[cfg(test)]
-mod tests {
+mod benchs {
     use std::time::Instant;
 
     #[test]
+    #[ignore]
     fn it_works() {
-        let initial = ::Instant::now();
-        ::benchmark(50000000, |iter| { assert!( ::Instant::now() > initial ) });
+        let initial = Instant::now();
+        ::benchmark(50000000, || { assert!( Instant::now() > initial ) });
     }
 }
