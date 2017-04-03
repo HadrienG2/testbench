@@ -1,7 +1,82 @@
+// TODO: Faire doc module + #![deny(missing_docs)]
+
 use std::sync::{Arc, Barrier};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
+
+/// Test that running two operations concurrently works
+///
+/// When testing multi-threaded constructs, such as synchronization primitives,
+/// checking that the code works when run sequentially is insufficient.
+/// Concurrent interactions must also be tested, by running some operations
+/// in parallel across multiple threads.
+///
+/// Ideally, this function would take as input a variable-size set of functors
+/// to be run in parallel. Since Rust does not support variadic generics yet,
+/// however, multiple versions of this function must be provided, each
+/// associated with a different functor tuple size.
+///
+pub fn concurrent_test_2<F, G>(f1: F, f2: G)
+    where F: FnOnce() + Send + 'static,
+          G: FnOnce() + Send + 'static
+{
+    // Setup a barrier to synchronize thread startup
+    let barrier1 = Arc::new(Barrier::new(2));
+    let barrier2 = barrier1.clone();
+
+    // Start the first task
+    let thread1 = thread::spawn(move || {
+        barrier1.wait();
+        f1();
+    });
+
+    // Run the second task
+    barrier2.wait();
+    f2();
+
+    // Make sure that the first task completed properly
+    thread1.join().unwrap();
+}
+
+
+/// Test that running three operations concurrently works
+///
+/// This is a variant of concurrent_test_2 that works with three functors
+/// instead of two. It is hoped that future evolutions of Rust will render this
+/// code duplication obsolete, in favor of some variadic generic design.
+///
+pub fn concurrent_test_3<F, G, H>(f1: F, f2: G, f3: H)
+    where F: FnOnce() + Send + 'static,
+          G: FnOnce() + Send + 'static,
+          H: FnOnce() + Send + 'static
+{
+    // Setup a barrier to synchronize thread startup
+    let barrier1 = Arc::new(Barrier::new(3));
+    let barrier2 = barrier1.clone();
+    let barrier3 = barrier1.clone();
+
+    // Start the first task
+    let thread1 = thread::spawn(move || {
+        barrier1.wait();
+        f1();
+    });
+
+    // Start the second task
+    let thread2 = thread::spawn(move || {
+        barrier2.wait();
+        f2();
+    });
+
+    // Run the third task
+    barrier3.wait();
+    f3();
+
+    // Make sure that the first two tasks completed properly
+    thread1.join().unwrap();
+    thread2.join().unwrap();
+}
+
 
 /// Microbenchmark some simple operation by running it N times
 ///
