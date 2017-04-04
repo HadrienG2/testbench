@@ -2,5 +2,12 @@
 name = "testbench"
 version = "0.1.0"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
+description = "Testing and benchmarking tools for concurrent Rust code"
+documentation = "https://docs.rs/testbench/"
+repository = "https://github.com/HadrienG2/testbench"
+readme = "README.md"
+keywords = [ "testing", "benchmarking", "multithreading", "concurrent" ]
+categories = [ "concurrency", "development-tools" ]
+license = "LGPL-3.0"
 
 [dependencies]
