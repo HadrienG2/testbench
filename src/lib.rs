@@ -1,9 +1,24 @@
-// TODO: Faire doc module + #![deny(missing_docs)]
+//! Testing and benchmarking tools for concurrent Rust code
+//!
+//! This crate groups together a bunch of utilities which I've found useful when
+//! testing and benchmarking Rust concurrency primitives in the triple_buffer
+//! and spmc_buffer crates.
+//!
+//! If it proves popular, other testing and benchmarking tools may be added,
+//! based on user demand.
+//!
+//! # Examples
+//!
+//! For examples of this crate at work, look at its "tests" and "benchs"
+//! submodules, which showcase expected usage.
+
+#![deny(missing_docs)]
 
 use std::sync::{Arc, Barrier};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
+
 
 /// Test that running two operations concurrently works
 ///
@@ -44,7 +59,7 @@ pub fn concurrent_test_2<F, G>(f1: F, f2: G)
 ///
 /// This is a variant of concurrent_test_2 that works with three functors
 /// instead of two. It is hoped that future evolutions of Rust will render this
-/// code duplication obsolete, in favor of some variadic generic design.
+/// (light) code duplication obsolete, in favor of some variadic design.
 ///
 pub fn concurrent_test_3<F, G, H>(f1: F, f2: G, f3: H)
     where F: FnOnce() + Send + 'static,
@@ -172,15 +187,133 @@ pub fn concurrent_benchmark<F, A>(num_iterations: u32,
 }
 
 
-/// TODO: Just an usage example, should probably be improved
+/// Examples of concurrent testing code
+#[cfg(test)]
+mod tests {
+    use std::ops::BitAnd;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    // Check the behaviour of concurrent atomic swaps and fetch-adds
+    #[test]
+    fn swap_and_fetch_add() {
+        // Amount of atomic operations to check
+        const ATOMIC_OPS_COUNT: usize = 100_000_000;
+
+        // Create a shared atomic variable
+        let atom = Arc::new(AtomicUsize::new(0));
+        let atom2 = atom.clone();
+
+        // Check that concurrent atomic operations work correctly
+        let mut last_value = 0;
+        ::concurrent_test_2(
+            move || {
+                // One thread continuously increments the atomic variable...
+                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                    let former_atom = atom.fetch_add(1, Ordering::Relaxed);
+                    assert!((former_atom == 0) || (former_atom == last_value));
+                    last_value = former_atom+1;
+                }
+            },
+            move || {
+                // ...as another continuously resets it to zero
+                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                    let former_atom = atom2.swap(0, Ordering::Relaxed);
+                    assert!(former_atom <= ATOMIC_OPS_COUNT);
+                }
+            }
+        );
+    }
+
+    // Check the behaviour of concurrent fetch-and/or/xors
+    #[test]
+    fn fetch_and_or_xor() {
+        // Amount of atomic operations to check
+        const ATOMIC_OPS_COUNT: usize = 30_000_000;
+
+        // Create a shared atomic variable. Even though this is an atomic Usize,
+        // we will only use the 16 low-order bits for maximal portability.
+        let atom = Arc::new(AtomicUsize::new(0));
+        let atom2 = atom.clone();
+        let atom3 = atom.clone();
+
+        // Masks used by each atomic operation
+        const AND_MASK: usize = 0b0000_0000_0000_0000; // Clear all bits
+        const XOR_MASK: usize = 0b0000_1111_0000_1111; // Flip some bits
+        const OR_MASK: usize  = 0b1111_0000_1111_0000; // Set other bits
+
+        // Check that concurrent atomic operations work correctly by ensuring
+        // that at any point in time, only the 16 low-order bits can be set, and
+        // the grouped sets of bits in the masks above are either all set or
+        // all cleared in any observable state.
+        ::concurrent_test_3(
+            move || {
+                // One thread runs fetch-ands in a loop...
+                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                    let old_val = atom.fetch_and(AND_MASK, Ordering::Relaxed);
+                    assert_eq!(old_val.bitand(0b1111_1111_1111_1111), old_val);
+                    assert!((old_val.bitand(XOR_MASK) == XOR_MASK) ||
+                            (old_val.bitand(XOR_MASK) == 0));
+                    assert!((old_val.bitand(OR_MASK) == OR_MASK) ||
+                            (old_val.bitand(OR_MASK) == 0));
+                }
+            },
+            move || {
+                // ...another runs fetch-ors in a loop...
+                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                    let old_val = atom2.fetch_or(OR_MASK, Ordering::Relaxed);
+                    assert_eq!(old_val.bitand(0b1111_1111_1111_1111), old_val);
+                    assert!((old_val.bitand(XOR_MASK) == XOR_MASK) ||
+                            (old_val.bitand(XOR_MASK) == 0));
+                    assert!((old_val.bitand(OR_MASK) == OR_MASK) ||
+                            (old_val.bitand(OR_MASK) == 0));
+                }
+            },
+            move || {
+                // ...and the last one runs fetch-xors in a loop...
+                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                    let old_val = atom3.fetch_xor(XOR_MASK, Ordering::Relaxed);
+                    assert_eq!(old_val.bitand(0b1111_1111_1111_1111), old_val);
+                    assert!((old_val.bitand(XOR_MASK) == XOR_MASK) ||
+                            (old_val.bitand(XOR_MASK) == 0));
+                    assert!((old_val.bitand(OR_MASK) == OR_MASK) ||
+                            (old_val.bitand(OR_MASK) == 0));
+                }
+            }
+        );
+    }
+}
+
+
+/// Exemples of benchmarking code
+///
+/// As discussed before, these should be run via the following command:
+///
+///   $ cargo test --release -- --ignored --nocapture --test-threads=1
 #[cfg(test)]
 mod benchs {
-    use std::time::Instant;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
+    // Benchmark relaxed atomics in sequential code (best case)
     #[test]
     #[ignore]
-    fn it_works() {
-        let initial = Instant::now();
-        ::benchmark(50000000, || { assert!( Instant::now() > initial ) });
+    fn bench_relaxed() {
+        let atom = AtomicUsize::new(0);
+        ::benchmark(500_000_000, || { atom.fetch_add(1, Ordering::Relaxed); });
+        assert_eq!(atom.load(Ordering::Relaxed), 500_000_000);
+    }
+
+    // Benchmark sequentially consistent atomics in concurrent code (worst case)
+    #[test]
+    #[ignore]
+    fn bench_seqcst() {
+        let atom = Arc::new(AtomicUsize::new(0));
+        let atom2 = atom.clone();
+        ::concurrent_benchmark(
+            100_000_000,
+            move || { atom.fetch_add(1, Ordering::SeqCst); },
+            move || { atom2.fetch_add(1, Ordering::SeqCst); }
+        );
     }
 }
