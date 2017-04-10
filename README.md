@@ -1,4 +1,4 @@
-# Triple buffering in Rust
+# Testing & benchmarking tools for concurrent Rust
 
 [![On crates.io](https://img.shields.io/crates/v/triple_buffer.svg)](https://crates.io/crates/testbench)
 [![On docs.rs](https://docs.rs/triple_buffer/badge.svg)](https://docs.rs/testbench/)
