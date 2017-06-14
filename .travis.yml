@@ -14,6 +14,7 @@ rust:
 
 # It may not be our fault if a Rust nightly breaks, so we tolerate it
 matrix:
+  fast_finish: true
   allow_failures:
     - rust: nightly
 
