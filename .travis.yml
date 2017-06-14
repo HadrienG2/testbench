@@ -10,7 +10,7 @@ rust:
   - nightly
   - beta
   - stable
-  - 1.0.0
+  - 1.8.0
 
 # The main build
 script:
