@@ -2,6 +2,7 @@
 
 [![On crates.io](https://img.shields.io/crates/v/testbench.svg)](https://crates.io/crates/testbench)
 [![On docs.rs](https://docs.rs/testbench/badge.svg)](https://docs.rs/testbench/)
+[![Build status](https://travis-ci.org/HadrienG2/testbench.svg?branch=master)](https://travis-ci.org/HadrienG2/testbench)
 
 ## What is this?
 
