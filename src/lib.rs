@@ -14,6 +14,8 @@
 
 #![deny(missing_docs)]
 
+pub mod race_cell;
+
 use std::sync::{Arc, Barrier};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
