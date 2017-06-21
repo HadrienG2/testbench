@@ -247,7 +247,12 @@ mod tests {
 
     /// Unprotected concurrent reads and writes to a RaceCell should trigger
     /// detectable race conditions, illustrating its non-atomic nature.
+    ///
+    /// To maximize the odds of race conditions, this kind of test should be run
+    /// in single-threaded mode.
+    ///
     #[test]
+    #[ignore]
     fn unprotected_race() {
         // Amount of writes to carry out
         const WRITES_COUNT: usize = 100_000_000;
@@ -282,7 +287,12 @@ mod tests {
 
     /// Appropriately protected concurrent reads and writes to a RaceCell should
     /// not yield any detectable race conditions.
+    ///
+    /// To maximize the odds of race conditions, this kind of test should be run
+    /// in single-threaded mode.
+    ///
     #[test]
+    #[ignore]
     fn protected_transaction() {
         // Amount of writes to carry out
         const WRITES_COUNT: usize = 10_000_000;
