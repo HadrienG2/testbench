@@ -1,4 +1,4 @@
-//! This module contains shareable mutable containers designed for triggering
+//! This module contains shareable mutable containers designed for enabling
 //! and detecting race conditions in thread synchronization testing code.
 //!
 //! # Motivation
@@ -12,23 +12,27 @@
 //! Testing a thread synchronization primitive involves showing that
 //! inconsistent states (where an operation appears to be half-performed) have a
 //! negligible probability of being exposed to the outside world in all expected
-//! usage scenarios. It is done by showing that a given non-atomic operation is
-//! properly encapsulated by the transactional semantics of the synchronization
-//! protocol, and will never appear to be half-done to observers.
+//! usage scenarios. It is typically done by showing that a given non-atomic
+//! operation is properly encapsulated by the transactional semantics of the
+//! synchronization protocol, and will never appear as half-done to observers.
 //!
 //! Non-atomic operations are easier said than done, however, when the set of
 //! operations which can be atomic in hardware is larger than most people think
 //! (at the time of writing, current Intel CPUs can access memory in blocks of
 //! 128 bits, and current NVidia GPUs can do so in blocks of 1024 bits), not
-//! well-defined by the architecture (and thus subjected to change in future
-//! hardware), and dependent on the compiler's optimization choices in a
+//! well-defined by the architecture (and thus subjected to increase in future
+//! hardware), and highly dependent on the compiler's optimization choices in a
 //! high-level programming language such as Rust.
+//!
+//! Which is why I think we need some types whose operations are guaranteed to
+//! be non-atomic under a set of reasonable assumptions, and which can easily be
+//! observed to be in an inconsistent state.
 //!
 //! # Functionality
 //!
 //! This module provides the RaceCell type, which can hold a value of a
-//! certain type U like a Cell<U> would, but is guaranteed *not* to be read
-//! or written to in a single atomic operation even if the corresponding type U
+//! certain type U like a `Cell<U>` would, but is guaranteed **not** to be read
+//! or written to in a single atomic operation, even if the corresponding type U
 //! can be atomically read or written to in hardware.
 //!
 //! In addition, a RaceCell can detect scenarios where it is read at the same
@@ -36,28 +40,27 @@
 //! condition) and report them to the reader thread.
 //!
 //! Such "controlled data races" can, in turn, be used to detect failures in
-//! thread synchronization protocols, manifesting as inconsistent shared state
+//! thread synchronization protocols, manifesting as inconsistent shared states
 //! being exposed to the outside world.
 //!
-//! # Requirements on T
+//! # Requirements on U
 //!
 //! In principle, any Clone + Eq type U whose equality operator and clone()
-//! implementation work even if the inner data is in a inconsistent state
-//! (e.g. filled with random bits) could work, and this is true of all integer
-//! types and combinations thereof. However, in practice, unsynchronized
-//! concurrent read/write access to such data from multiple threads constitutes
-//! a data race, which is undefined behaviour in Rust, even if the data is
-//! wrapped into an UnsafeCell.
+//! implementation behave well even if the inner data is in a inconsistent state
+//! (e.g. filled with random bits) could be used. This is true of all primitive
+//! integral types and aggregates thereof, for example.
 //!
-//! The net result of this behaviour being undefined is that rustc's optimizer
-//! allows itself to generate code under the assumption that it won't happen,
-//! which leads to breakages when code which is built under the knowledge that
-//! it will actually happen is compiled in release mode.
+//! However, in practice, unsynchronized concurrent read/write access to
+//! arbitrary data from multiple threads constitutes a data race, which is
+//! undefined behaviour in Rust even when it occurs inside an UnsafeCell. This
+//! is problematic because rustc's optimizer allows itself to transform code
+//! which relies on undefined behaviour however it likes, leading to breakages
+//! in release builds such as infinite loops appearing out of nowhere.
 //!
-//! For this reason, we currently only support some specific types T which have
-//! atomic load and store operations. Note that although individual loads and
-//! stores to T are atomic, loads and stores to RaceCell<T> are still
-//! guaranteed not to be atomic.
+//! For this reason, we currently only support some specific types U which have
+//! atomic load and store operations, implemented as part of an atomic wrapper
+//! T. Note that although individual loads and stores to U are atomic, loads and
+//! stores to RaceCell<T> are still guaranteed not to be atomic.
 
 
 #![deny(missing_docs)]
@@ -69,11 +72,12 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicUsize};
 use std::sync::atomic::Ordering;
 
 
-/// RaceCell is a container for triggering and detecting write-after-read
-/// data races in a well-controlled fashion.
+/// Shareable mutable container for triggering and detecting write-after-read
+/// data races in a well-controlled fashion. Operates on a type U through an
+/// atomic wrapper type T.
 pub struct RaceCell<T, U> where T: AtomicLoadStore<U>,
                                 U: Clone + Debug + Eq {
-    /// Two copies of a value of type T are made. One is stored on the stack...
+    /// Two copies of a value of type U are made. One is stored on the stack...
     local_contents: T,
 
     /// ...and one is stored on the heap, which in all popular OSs is too far
@@ -82,8 +86,8 @@ pub struct RaceCell<T, U> where T: AtomicLoadStore<U>,
     ///
     /// Of course, a malicious optimizer could still use hardware transactional
     /// memory or a software emulation thereof to achieve this effect, but there
-    /// are no performance benefits in doing so, and in fact it has an averse
-    /// effect on performance, so a realistic optimizer won't do it.
+    /// are no performance benefits in doing so, and in fact it will rather have
+    /// an averse effect on performance, so a realistic optimizer won't do it.
     ///
     remote_version: Box<T>,
 
@@ -105,15 +109,15 @@ impl<T, U> RaceCell<T, U> where T: AtomicLoadStore<U>,
 
     /// Update the internal contents of the RaceCell in a non-atomic fashion
     pub fn set(&self, value: U) {
-        self.local_contents.store(value.clone(), Ordering::Relaxed);
-        self.remote_version.store(value, Ordering::Relaxed);
+        self.local_contents.relaxed_store(value.clone());
+        self.remote_version.relaxed_store(value);
     }
 
     /// Read the current contents of the RaceCell, detecting any data race
     /// caused by a concurrently occurring write along the way.
     pub fn get(&self) -> Racey<U> {
-        let local_data = self.local_contents.load(Ordering::Relaxed);
-        let remote_data = self.remote_version.load(Ordering::Relaxed);
+        let local_data = self.local_contents.relaxed_load();
+        let remote_data = self.remote_version.relaxed_load();
         if local_data == remote_data {
             Racey::Consistent(local_data)
         } else {
@@ -129,28 +133,35 @@ pub enum Racey<U: Debug + Eq> {
     /// The RaceCell was internally consistent, and its content was copied
     Consistent(U),
 
-    /// The RaceCell was internally inconsistent, so a data race has occurred
+    /// The RaceCell was internally inconsistent: a data race has occurred
     Inconsistent,
 }
 
 
+/// Atomic wrapper type for a value of type U
+///
 /// For the implementation of RaceCell not to be considered as undefined
 /// behaviour and trashed by the Rust compiler in release mode, the underlying
-/// type T's load and store operations must be atomic. In practice, this is true
-/// of all std::sync::atomic::AtomicXyz types.
+/// type U must be loaded and stored atomically. This requires synchronizing
+/// accesses to it using things like the std::sync::atomic::AtomicXyz wrappers.
+///
+/// The only guarantee that we need is that loads and stores are atomic. We do
+/// not need any other memory ordering guarantee. This is why we allow for
+/// more wrapper type implementation freedom by not specifying memory orderings,
+/// and internally relying only on relaxed ordering.
 ///
 pub trait AtomicLoadStore<U> {
-    /// Create an atomic value
+    /// Create an atomic wrapper for a value of type U
     fn new(v: U) -> Self;
 
-    /// Atomically load the contents
-    fn load(&self, order: Ordering) -> U;
+    /// Atomically load a value from the wrapper
+    fn relaxed_load(&self) -> U;
 
-    /// Atomically store new contents
-    fn store(&self, val: U, order: Ordering);
+    /// Atomically store a new value into the wrapper
+    fn relaxed_store(&self, val: U);
 }
 ///
-/// This macro implements support for one non-generic atomic type
+/// This macro implements support for non-generic standard atomic types
 ///
 macro_rules! impl_load_store {
     ($($U:ty, $T:ty);*) => ($(
@@ -159,12 +170,12 @@ macro_rules! impl_load_store {
                 <$T>::new(v)
             }
 
-            fn load(&self, order: Ordering) -> $U {
-                <$T>::load(self, order)
+            fn relaxed_load(&self) -> $U {
+                <$T>::load(self, Ordering::Relaxed)
             }
 
-            fn store(&self, val: $U, order: Ordering) {
-                <$T>::store(self, val, order)
+            fn relaxed_store(&self, val: $U) {
+                <$T>::store(self, val, Ordering::Relaxed)
             }
         }
     )*)
@@ -174,25 +185,25 @@ impl_load_store!{ bool,  AtomicBool;
                   isize, AtomicIsize;
                   usize, AtomicUsize }
 ///
-/// Atomic pointers are a bit special as they are generic, so for now we
-/// will just treat them as a special case.
+/// Atomic pointers are a bit special as they are generic, for now we will just
+/// treat them as a special case.
 ///
 impl<V> AtomicLoadStore<*mut V> for AtomicPtr<V> {
     fn new(v: *mut V) -> AtomicPtr<V> {
         <AtomicPtr<V>>::new(v)
     }
 
-    fn load(&self, order: Ordering) -> *mut V {
-        <AtomicPtr<V>>::load(self, order)
+    fn relaxed_load(&self) -> *mut V {
+        <AtomicPtr<V>>::load(self, Ordering::Relaxed)
     }
 
-    fn store(&self, val: *mut V, order: Ordering) {
-        <AtomicPtr<V>>::store(self, val, order)
+    fn relaxed_store(&self, val: *mut V) {
+        <AtomicPtr<V>>::store(self, val, Ordering::Relaxed)
     }
 }
 
 
-// Here are implementations of RaceCell for all supported data types
+// Here are implementations of RaceCell for all stable hardware atomic types
 
 /// Implementation of RaceCell for bool
 pub type BoolRaceCell = RaceCell<AtomicBool, bool>;
@@ -208,15 +219,15 @@ pub type UsizeRaceCell = RaceCell<AtomicUsize, usize>;
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
-    use std::sync::atomic::Ordering;
-    use super::{BoolRaceCell, IsizeRaceCell, UsizeRaceCell, Racey};
+    use super::{AtomicLoadStore, Racey};
+    use super::{BoolRaceCell, IsizeRaceCell, UsizeRaceCell};
 
     /// A RaceCell should be created in a consistent and correct state
     #[test]
     fn initial_state() {
         let cell = BoolRaceCell::new(true);
-        assert_eq!(cell.local_contents.load(Ordering::Relaxed), true);
-        assert_eq!(cell.remote_version.load(Ordering::Relaxed), true);
+        assert_eq!(cell.local_contents.relaxed_load(), true);
+        assert_eq!(cell.remote_version.relaxed_load(), true);
     }
 
     /// Reading a consistent RaceCell should work as expected
@@ -230,7 +241,7 @@ mod tests {
     #[test]
     fn inconsistent_read() {
         let cell = UsizeRaceCell::new(0xbad);
-        cell.local_contents.store(0xdead, Ordering::Relaxed);
+        cell.local_contents.relaxed_store(0xdead);
         assert_eq!(cell.get(), Racey::Inconsistent);
     }
 
@@ -246,7 +257,8 @@ mod tests {
         let cell1 = Arc::new(UsizeRaceCell::new(initial_value));
         let cell2 = cell1.clone();
 
-        // Make sure that RaceCell does expose existing data races :)
+        // Make sure that RaceCell does expose existing data races, with a
+        // detection probability better than 1% for very obvious ones :)
         ::concurrent_test_2(
             move || {
                 for i in 1..(WRITES_COUNT+1) {
@@ -262,8 +274,8 @@ mod tests {
                         Racey::Inconsistent => data_race_count += 1,
                     }
                 }
-                print!("{} races detected, ", data_race_count);
-                assert!(data_race_count > 0);
+                print!("{} races detected: ", data_race_count);
+                assert!(data_race_count > WRITES_COUNT/100);
             }
         );
     }
