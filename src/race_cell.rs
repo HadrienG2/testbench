@@ -75,6 +75,7 @@ use std::sync::atomic::Ordering;
 /// Shareable mutable container for triggering and detecting write-after-read
 /// data races in a well-controlled fashion. Operates on a type U through an
 /// atomic wrapper type T.
+#[derive(Debug)]
 pub struct RaceCell<T, U> where T: AtomicLoadStore<U>,
                                 U: Clone + Debug + Eq {
     /// Two copies of a value of type U are made. One is stored on the stack...
@@ -122,6 +123,20 @@ impl<T, U> RaceCell<T, U> where T: AtomicLoadStore<U>,
             Racey::Consistent(local_data)
         } else {
             Racey::Inconsistent
+        }
+    }
+}
+//
+impl<T, U> Clone for RaceCell<T, U> where T: AtomicLoadStore<U>,
+                                          U: Clone + Debug + Eq {
+    /// Making RaceCells cloneable allows putting them in concurrent containers
+    fn clone(&self) -> Self {
+        let local_copy = self.local_contents.relaxed_load();
+        let remote_copy = self.remote_version.relaxed_load();
+        RaceCell {
+            local_contents: T::new(local_copy),
+            remote_version: Box::new(T::new(remote_copy)),
+            unused: PhantomData,
         }
     }
 }
@@ -243,6 +258,16 @@ mod tests {
         let cell = UsizeRaceCell::new(0xbad);
         cell.local_contents.relaxed_store(0xdead);
         assert_eq!(cell.get(), Racey::Inconsistent);
+    }
+
+    /// RaceCells should be cloned as-is, even if in an inconsistent state
+    #[test]
+    fn clone() {
+        let cell = UsizeRaceCell::new(0xbeef);
+        cell.local_contents.relaxed_store(0xdeaf);
+        let clone = cell.clone();
+        assert_eq!(clone.local_contents.relaxed_load(), 0xdeaf);
+        assert_eq!(clone.remote_version.relaxed_load(), 0xbeef);
     }
 
     /// Unprotected concurrent reads and writes to a RaceCell should trigger
