@@ -9,6 +9,7 @@ readme = "README.md"
 keywords = [ "testing", "benchmarking", "multithreading", "concurrent" ]
 categories = [ "concurrency", "development-tools" ]
 license = "LGPL-3.0"
+maintenance = { status = "actively-developed" }
 
 [badges]
 travis-ci = { repository = "HadrienG2/testbench", branch = "master" }
