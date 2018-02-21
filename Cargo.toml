@@ -1,6 +1,6 @@
 [package]
 name = "testbench"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 description = "Testing and benchmarking tools for concurrent Rust code"
 documentation = "https://docs.rs/testbench/"

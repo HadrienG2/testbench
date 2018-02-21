@@ -140,6 +140,14 @@ impl<T, U> Clone for RaceCell<T, U> where T: AtomicLoadStore<U>,
         }
     }
 }
+//
+impl<T, U> Default for RaceCell<T, U> where T: AtomicLoadStore<U>,
+                                            U: Clone + Default + Debug + Eq {
+    /// A RaceCell has a default value if the inner type has
+    fn default() -> Self {
+        Self::new(U::default())
+    }
+}
 
 
 /// This is the result of a RaceCell read
