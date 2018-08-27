@@ -171,11 +171,11 @@ pub fn concurrent_benchmark<F, A>(num_iterations: u32,
     let run_flag = Arc::new(AtomicBool::new(true));
 
     // Schedule the antagonist thread
-    let (a_barrier, a_run_flag) = (barrier.clone(), run_flag.clone());
+    let (antag_barrier, antag_run_flag) = (barrier.clone(), run_flag.clone());
     let antagonist = thread::spawn(
         move || {
-            a_barrier.wait();
-            while a_run_flag.load(Ordering::Relaxed) {
+            antag_barrier.wait();
+            while antag_run_flag.load(Ordering::Relaxed) {
                 antagonist_func();
             }
         }
@@ -259,33 +259,33 @@ mod tests {
                 // One thread runs fetch-ands in a loop...
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let old_val = atom.fetch_and(AND_MASK, Ordering::Relaxed);
-                    assert_eq!(old_val.bitand(0b1111_1111_1111_1111), old_val);
-                    assert!((old_val.bitand(XOR_MASK) == XOR_MASK) ||
-                            (old_val.bitand(XOR_MASK) == 0));
-                    assert!((old_val.bitand(OR_MASK) == OR_MASK) ||
-                            (old_val.bitand(OR_MASK) == 0));
+                    assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
+                    assert!((old_val & XOR_MASK == XOR_MASK) ||
+                            (old_val & XOR_MASK == 0));
+                    assert!((old_val & OR_MASK == OR_MASK) ||
+                            (old_val & OR_MASK == 0));
                 }
             },
             move || {
                 // ...another runs fetch-ors in a loop...
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let old_val = atom2.fetch_or(OR_MASK, Ordering::Relaxed);
-                    assert_eq!(old_val.bitand(0b1111_1111_1111_1111), old_val);
-                    assert!((old_val.bitand(XOR_MASK) == XOR_MASK) ||
-                            (old_val.bitand(XOR_MASK) == 0));
-                    assert!((old_val.bitand(OR_MASK) == OR_MASK) ||
-                            (old_val.bitand(OR_MASK) == 0));
+                    assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
+                    assert!((old_val & XOR_MASK == XOR_MASK) ||
+                            (old_val & XOR_MASK == 0));
+                    assert!((old_val & OR_MASK == OR_MASK) ||
+                            (old_val & OR_MASK == 0));
                 }
             },
             move || {
                 // ...and the last one runs fetch-xors in a loop...
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let old_val = atom3.fetch_xor(XOR_MASK, Ordering::Relaxed);
-                    assert_eq!(old_val.bitand(0b1111_1111_1111_1111), old_val);
-                    assert!((old_val.bitand(XOR_MASK) == XOR_MASK) ||
-                            (old_val.bitand(XOR_MASK) == 0));
-                    assert!((old_val.bitand(OR_MASK) == OR_MASK) ||
-                            (old_val.bitand(OR_MASK) == 0));
+                    assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
+                    assert!((old_val & XOR_MASK == XOR_MASK) ||
+                            (old_val & XOR_MASK == 0));
+                    assert!((old_val & OR_MASK == OR_MASK) ||
+                            (old_val & OR_MASK == 0));
                 }
             }
         );
