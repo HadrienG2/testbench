@@ -16,10 +16,15 @@
 
 pub mod race_cell;
 
-use std::sync::{Arc, Barrier};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread;
-use std::time::{Duration, Instant};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+        Barrier,
+    },
+    thread,
+    time::{Duration, Instant},
+};
 
 
 /// Test that running two operations concurrently works
@@ -192,9 +197,10 @@ pub fn concurrent_benchmark<F, A>(num_iterations: u32,
 /// Examples of concurrent testing code
 #[cfg(test)]
 mod tests {
-    use std::ops::BitAnd;
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
 
     // Check the behaviour of concurrent atomic swaps and fetch-adds
     #[test]
@@ -294,8 +300,10 @@ mod tests {
 ///   $ cargo test --release -- --ignored --nocapture --test-threads=1
 #[cfg(test)]
 mod benchs {
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
 
     // Benchmark relaxed atomics in sequential code (best case)
     #[test]

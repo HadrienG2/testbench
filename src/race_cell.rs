@@ -62,14 +62,13 @@
 //! T. Note that although individual loads and stores to U are atomic, loads and
 //! stores to RaceCell<T> are still guaranteed not to be atomic.
 
-
 #![deny(missing_docs)]
 
-use std::boxed::Box;
-use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicUsize};
-use std::sync::atomic::Ordering;
+use std::{
+    fmt::Debug,
+    marker::PhantomData,
+    sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicUsize, Ordering},
+};
 
 
 /// Shareable mutable container for triggering and detecting write-after-read
@@ -242,8 +241,13 @@ pub type UsizeRaceCell = RaceCell<AtomicUsize, usize>;
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
-    use super::{AtomicLoadStore, Racey};
-    use super::{BoolRaceCell, IsizeRaceCell, UsizeRaceCell};
+    use super::{
+        AtomicLoadStore,
+        BoolRaceCell,
+        IsizeRaceCell,
+        Racey,
+        UsizeRaceCell
+    };
 
     /// A RaceCell should be created in a consistent and correct state
     #[test]
