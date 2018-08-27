@@ -14,6 +14,7 @@
 
 #![deny(missing_docs)]
 
+pub mod noinline;
 pub mod race_cell;
 
 use std::{
@@ -50,12 +51,12 @@ pub fn concurrent_test_2<F, G>(f1: F, f2: G)
     // Start the first task
     let thread1 = thread::spawn(move || {
         barrier1.wait();
-        f1();
+        noinline::call_once(f1);
     });
 
     // Run the second task
     barrier2.wait();
-    f2();
+    noinline::call_once(f2);
 
     // Make sure that the first task completed properly
     thread1.join().unwrap();
@@ -81,18 +82,18 @@ pub fn concurrent_test_3<F, G, H>(f1: F, f2: G, f3: H)
     // Start the first task
     let thread1 = thread::spawn(move || {
         barrier1.wait();
-        f1();
+        noinline::call_once(f1);
     });
 
     // Start the second task
     let thread2 = thread::spawn(move || {
         barrier2.wait();
-        f2();
+        noinline::call_once(f2);
     });
 
     // Run the third task
     barrier3.wait();
-    f3();
+    noinline::call_once(f3);
 
     // Make sure that the first two tasks completed properly
     thread1.join().unwrap();
@@ -118,7 +119,7 @@ pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
     for _ in 0..num_iterations {
-        iteration()
+        noinline::call_mut(&mut iteration);
     }
     let total_duration = start_time.elapsed();
 
@@ -176,7 +177,7 @@ pub fn concurrent_benchmark<F, A>(num_iterations: u32,
         move || {
             antag_barrier.wait();
             while antag_run_flag.load(Ordering::Relaxed) {
-                antagonist_func();
+                noinline::call_mut(&mut antagonist_func);
             }
         }
     );
@@ -310,8 +311,9 @@ mod benchs {
     #[ignore]
     fn bench_relaxed() {
         let atom = AtomicUsize::new(0);
-        ::benchmark(500_000_000, || { atom.fetch_add(1, Ordering::Relaxed); });
-        assert_eq!(atom.load(Ordering::Relaxed), 500_000_000);
+        ::benchmark(930_000_000, || {
+            atom.fetch_add(1, Ordering::Relaxed);
+        });
     }
 
     // Benchmark sequentially consistent atomics in concurrent code (worst case)
@@ -321,7 +323,7 @@ mod benchs {
         let atom = Arc::new(AtomicUsize::new(0));
         let atom2 = atom.clone();
         ::concurrent_benchmark(
-            100_000_000,
+            110_000_000,
             move || { atom.fetch_add(1, Ordering::SeqCst); },
             move || { atom2.fetch_add(1, Ordering::SeqCst); }
         );
