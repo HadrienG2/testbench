@@ -40,10 +40,8 @@ use std::{
 /// however, multiple versions of this function must be provided, each
 /// associated with a different functor tuple size.
 ///
-pub fn concurrent_test_2<F, G>(f1: F, f2: G)
-    where F: FnOnce() + Send + 'static,
-          G: FnOnce() + Send + 'static
-{
+pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static,
+                         f2: impl FnOnce() + Send + 'static) {
     // Setup a barrier to synchronize thread startup
     let barrier1 = Arc::new(Barrier::new(2));
     let barrier2 = barrier1.clone();
@@ -69,11 +67,9 @@ pub fn concurrent_test_2<F, G>(f1: F, f2: G)
 /// instead of two. It is hoped that future evolutions of Rust will render this
 /// (light) code duplication obsolete, in favor of some variadic design.
 ///
-pub fn concurrent_test_3<F, G, H>(f1: F, f2: G, f3: H)
-    where F: FnOnce() + Send + 'static,
-          G: FnOnce() + Send + 'static,
-          H: FnOnce() + Send + 'static
-{
+pub fn concurrent_test_3(f1: impl FnOnce() + Send + 'static,
+                         f2: impl FnOnce() + Send + 'static,
+                         f3: impl FnOnce() + Send + 'static) {
     // Setup a barrier to synchronize thread startup
     let barrier1 = Arc::new(Barrier::new(3));
     let barrier2 = barrier1.clone();
@@ -115,7 +111,8 @@ pub fn concurrent_test_3<F, G, H>(f1: F, f2: G, f3: H)
 ///
 /// This is a dreadful hack. But for now, it's the best that I've thought of.
 ///
-pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
+pub fn benchmark(num_iterations: u32,
+                 mut iteration: impl FnMut()) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
     for _ in 0..num_iterations {
@@ -158,12 +155,11 @@ pub fn benchmark<F: FnMut()>(num_iterations: u32, mut iteration: F) {
 /// operation as another "antagonist" operation is also running in a background
 /// thread. This function implements such concurrent benchmarking.
 ///
-pub fn concurrent_benchmark<F, A>(num_iterations: u32,
-                                  iteration_func: F,
-                                  mut antagonist_func: A)
-    where F: FnMut(),
-          A: FnMut() + Send + 'static
-{
+pub fn concurrent_benchmark(
+    num_iterations: u32,
+    iteration_func: impl FnMut(),
+    mut antagonist_func: impl FnMut() + Send + 'static
+) {
     // Setup a barrier to synchronize benchmark and antagonist startup
     let barrier = Arc::new(Barrier::new(2));
 
