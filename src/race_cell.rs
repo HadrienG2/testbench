@@ -301,7 +301,7 @@ mod tests {
 
         // Make sure that RaceCell does expose existing data races, with a
         // detection probability better than 1% for very obvious ones :)
-        ::concurrent_test_2(
+        crate::concurrent_test_2(
             move || {
                 for i in 1..(WRITES_COUNT+1) {
                     cell1.set(i);
@@ -340,7 +340,7 @@ mod tests {
         let cell2 = cell1.clone();
 
         // Make sure that RaceCell does not incorrectly detect race conditions
-        ::concurrent_test_2(
+        crate::concurrent_test_2(
             move || {
                 for i in 1..(WRITES_COUNT+1) {
                     cell1.lock().unwrap().set(i);

@@ -211,7 +211,7 @@ mod tests {
 
         // Check that concurrent atomic operations work correctly
         let mut last_value = 0;
-        ::concurrent_test_2(
+        crate::concurrent_test_2(
             move || {
                 // One thread continuously increments the atomic variable...
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
@@ -251,7 +251,7 @@ mod tests {
         // that at any point in time, only the 16 low-order bits can be set, and
         // the grouped sets of bits in the masks above are either all set or
         // all cleared in any observable state.
-        ::concurrent_test_3(
+        crate::concurrent_test_3(
             move || {
                 // One thread runs fetch-ands in a loop...
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
@@ -307,7 +307,7 @@ mod benchs {
     #[ignore]
     fn bench_relaxed() {
         let atom = AtomicUsize::new(0);
-        ::benchmark(930_000_000, || {
+        crate::benchmark(930_000_000, || {
             atom.fetch_add(1, Ordering::Relaxed);
         });
     }
@@ -318,7 +318,7 @@ mod benchs {
     fn bench_seqcst() {
         let atom = Arc::new(AtomicUsize::new(0));
         let atom2 = atom.clone();
-        ::concurrent_benchmark(
+        crate::concurrent_benchmark(
             110_000_000,
             move || { atom.fetch_add(1, Ordering::SeqCst); },
             move || { atom2.fetch_add(1, Ordering::SeqCst); }
