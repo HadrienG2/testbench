@@ -1,6 +1,6 @@
 //! Inlining barriers for function calls
 //!
-//! Inlining is great for optimization. But it can cause problem in micro-
+//! Inlining is great for optimization. But it can cause problems in micro-
 //! benchmarking and multi-threaded validation as it leads some testing and
 //! benchmarking constructs to be optimized out. This module can be used to
 //! avoid this outcome without altering the function being called itself.
