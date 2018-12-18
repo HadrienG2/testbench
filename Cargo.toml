@@ -9,6 +9,7 @@ readme = "README.md"
 keywords = [ "testing", "benchmarking", "multithreading", "concurrent" ]
 categories = [ "concurrency", "development-tools" ]
 license = "MPL-2.0"
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "HadrienG2/testbench", branch = "master" }
