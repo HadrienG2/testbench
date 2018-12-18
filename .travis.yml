@@ -19,6 +19,8 @@ matrix:
     - rust: nightly
 
 # The main build
+before_script:
+  - rustup component add clippy
 script:
   - cargo check
   - cargo clippy
