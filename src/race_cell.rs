@@ -294,7 +294,7 @@ mod tests {
         // detection probability better than 1% for very obvious ones :)
         crate::concurrent_test_2(
             move || {
-                for i in 1..(WRITES_COUNT + 1) {
+                for i in 1..=WRITES_COUNT {
                     cell1.set(i);
                 }
             },
@@ -333,7 +333,7 @@ mod tests {
         // Make sure that RaceCell does not incorrectly detect race conditions
         crate::concurrent_test_2(
             move || {
-                for i in 1..(WRITES_COUNT + 1) {
+                for i in 1..=WRITES_COUNT {
                     cell1.lock().unwrap().set(i);
                 }
             },

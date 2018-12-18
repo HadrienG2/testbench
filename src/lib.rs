@@ -205,7 +205,7 @@ mod tests {
         crate::concurrent_test_2(
             move || {
                 // One thread continuously increments the atomic variable...
-                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                for _ in 1..=ATOMIC_OPS_COUNT {
                     let former_atom = atom.fetch_add(1, Ordering::Relaxed);
                     assert!((former_atom == 0) || (former_atom == last_value));
                     last_value = former_atom + 1;
@@ -213,7 +213,7 @@ mod tests {
             },
             move || {
                 // ...as another continuously resets it to zero
-                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                for _ in 1..=ATOMIC_OPS_COUNT {
                     let former_atom = atom2.swap(0, Ordering::Relaxed);
                     assert!(former_atom <= ATOMIC_OPS_COUNT);
                 }
@@ -245,7 +245,7 @@ mod tests {
         crate::concurrent_test_3(
             move || {
                 // One thread runs fetch-ands in a loop...
-                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                for _ in 1..=ATOMIC_OPS_COUNT {
                     let old_val = atom.fetch_and(AND_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
                     assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
@@ -254,7 +254,7 @@ mod tests {
             },
             move || {
                 // ...another runs fetch-ors in a loop...
-                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                for _ in 1..=ATOMIC_OPS_COUNT {
                     let old_val = atom2.fetch_or(OR_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
                     assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
@@ -263,7 +263,7 @@ mod tests {
             },
             move || {
                 // ...and the last one runs fetch-xors in a loop...
-                for _ in 1..(ATOMIC_OPS_COUNT + 1) {
+                for _ in 1..=ATOMIC_OPS_COUNT {
                     let old_val = atom3.fetch_xor(XOR_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
                     assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
