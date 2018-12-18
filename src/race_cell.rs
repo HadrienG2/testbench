@@ -64,19 +64,15 @@
 
 #![deny(missing_docs)]
 
-use std::sync::atomic::{
-    AtomicBool,
-    AtomicIsize,
-    AtomicPtr,
-    AtomicUsize,
-    Ordering
-};
-
+use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicUsize, Ordering};
 
 /// Shareable mutable container for triggering and detecting write-after-read
 /// data races in a well-controlled fashion.
 #[derive(Debug)]
-pub struct RaceCell<T> where T: AtomicData {
+pub struct RaceCell<T>
+where
+    T: AtomicData,
+{
     /// Two copies of a value of type T are made. One is stored on the stack...
     local_contents: T::AtomicWrapper,
 
@@ -92,7 +88,10 @@ pub struct RaceCell<T> where T: AtomicData {
     remote_version: Box<T::AtomicWrapper>,
 }
 //
-impl<T> RaceCell<T> where T: AtomicData {
+impl<T> RaceCell<T>
+where
+    T: AtomicData,
+{
     /// Create a new RaceCell with a certain initial content
     pub fn new(value: T) -> Self {
         RaceCell {
@@ -120,7 +119,10 @@ impl<T> RaceCell<T> where T: AtomicData {
     }
 }
 //
-impl<T> Clone for RaceCell<T> where T: AtomicData {
+impl<T> Clone for RaceCell<T>
+where
+    T: AtomicData,
+{
     /// Making RaceCells cloneable allows putting them in concurrent containers
     fn clone(&self) -> Self {
         let local_copy = self.local_contents.relaxed_load();
@@ -132,13 +134,15 @@ impl<T> Clone for RaceCell<T> where T: AtomicData {
     }
 }
 //
-impl<T> Default for RaceCell<T> where T: AtomicData + Default {
+impl<T> Default for RaceCell<T>
+where
+    T: AtomicData + Default,
+{
     /// A RaceCell has a default value if the inner type has
     fn default() -> Self {
         Self::new(T::default())
     }
 }
-
 
 /// This is the result of a RaceCell read
 #[derive(Debug, Eq, PartialEq)]
@@ -150,11 +154,10 @@ pub enum Racey<U: AtomicData> {
     Inconsistent,
 }
 
-
 /// Requirements on the data held by a RaceCell
 pub trait AtomicData: Clone + Eq + Sized {
     /// Atomic wrapper type for this data implementing relaxed atomic load/store
-    type AtomicWrapper: AtomicLoadStore<Content=Self>;
+    type AtomicWrapper: AtomicLoadStore<Content = Self>;
 }
 ///
 /// Atomic wrapper type for a certain kind of value
@@ -171,7 +174,7 @@ pub trait AtomicData: Clone + Eq + Sized {
 ///
 pub trait AtomicLoadStore: Sized {
     /// Type of data that is being wrapped
-    type Content: AtomicData<AtomicWrapper=Self>;
+    type Content: AtomicData<AtomicWrapper = Self>;
 
     /// Create an atomic wrapper for a value of type U
     fn new(v: Self::Content) -> Self;
@@ -209,9 +212,9 @@ macro_rules! impl_atomic_data {
     )*)
 }
 ///
-impl_atomic_data!{ bool  => AtomicBool,
-                   isize => AtomicIsize,
-                   usize => AtomicUsize }
+impl_atomic_data! { bool  => AtomicBool,
+isize => AtomicIsize,
+usize => AtomicUsize }
 ///
 /// Atomic pointers are a bit special as they are generic, for now we will just
 /// treat them as a special case.
@@ -241,12 +244,11 @@ impl<V> AtomicLoadStore for AtomicPtr<V> {
 //        will only be implemented once Rust has specialization, to avoid
 //        pessimizing the common case where a primitive type is enough.
 
-
 /// Here are some RaceCell tests
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
     use super::{AtomicLoadStore, RaceCell, Racey};
+    use std::sync::{Arc, Mutex};
 
     /// A RaceCell should be created in a consistent and correct state
     #[test]
@@ -302,7 +304,7 @@ mod tests {
         // detection probability better than 1% for very obvious ones :)
         crate::concurrent_test_2(
             move || {
-                for i in 1..(WRITES_COUNT+1) {
+                for i in 1..(WRITES_COUNT + 1) {
                     cell1.set(i);
                 }
             },
@@ -316,8 +318,8 @@ mod tests {
                     }
                 }
                 print!("{} races detected: ", data_race_count);
-                assert!(data_race_count > WRITES_COUNT/100);
-            }
+                assert!(data_race_count > WRITES_COUNT / 100);
+            },
         );
     }
 
@@ -341,7 +343,7 @@ mod tests {
         // Make sure that RaceCell does not incorrectly detect race conditions
         crate::concurrent_test_2(
             move || {
-                for i in 1..(WRITES_COUNT+1) {
+                for i in 1..(WRITES_COUNT + 1) {
                     cell1.lock().unwrap().set(i);
                 }
             },
@@ -355,7 +357,7 @@ mod tests {
                     }
                 }
                 assert_eq!(data_race_count, 0);
-            }
+            },
         );
     }
 }

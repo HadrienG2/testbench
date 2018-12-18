@@ -19,14 +19,12 @@ pub mod race_cell;
 
 use std::{
     sync::{
-        Arc,
         atomic::{AtomicBool, Ordering},
-        Barrier,
+        Arc, Barrier,
     },
     thread,
     time::{Duration, Instant},
 };
-
 
 /// Test that running two operations concurrently works
 ///
@@ -40,8 +38,7 @@ use std::{
 /// however, multiple versions of this function must be provided, each
 /// associated with a different functor tuple size.
 ///
-pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static,
-                         f2: impl FnOnce() + Send + 'static) {
+pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static, f2: impl FnOnce() + Send + 'static) {
     // Setup a barrier to synchronize thread startup
     let barrier1 = Arc::new(Barrier::new(2));
     let barrier2 = barrier1.clone();
@@ -60,16 +57,17 @@ pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static,
     thread1.join().unwrap();
 }
 
-
 /// Test that running three operations concurrently works
 ///
 /// This is a variant of concurrent_test_2 that works with three functors
 /// instead of two. It is hoped that future evolutions of Rust will render this
 /// (light) code duplication obsolete, in favor of some variadic design.
 ///
-pub fn concurrent_test_3(f1: impl FnOnce() + Send + 'static,
-                         f2: impl FnOnce() + Send + 'static,
-                         f3: impl FnOnce() + Send + 'static) {
+pub fn concurrent_test_3(
+    f1: impl FnOnce() + Send + 'static,
+    f2: impl FnOnce() + Send + 'static,
+    f3: impl FnOnce() + Send + 'static,
+) {
     // Setup a barrier to synchronize thread startup
     let barrier1 = Arc::new(Barrier::new(3));
     let barrier2 = barrier1.clone();
@@ -96,7 +94,6 @@ pub fn concurrent_test_3(f1: impl FnOnce() + Send + 'static,
     thread2.join().unwrap();
 }
 
-
 /// Microbenchmark some simple operation by running it N times
 ///
 /// This simple benchmark harness is meant as a cheap and hackish substitute for
@@ -111,8 +108,7 @@ pub fn concurrent_test_3(f1: impl FnOnce() + Send + 'static,
 ///
 /// This is a dreadful hack. But for now, it's the best that I've thought of.
 ///
-pub fn benchmark(num_iterations: u32,
-                 mut iteration: impl FnMut()) {
+pub fn benchmark(num_iterations: u32, mut iteration: impl FnMut()) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
     for _ in 0..num_iterations {
@@ -123,8 +119,8 @@ pub fn benchmark(num_iterations: u32,
     // Reproducible benchmarks (<10% variance) usually take between a couple of
     // seconds and a couple of minutes, so miliseconds are the right timing unit
     // for the duration of the whole benchmark.
-    let total_ms = (total_duration.as_secs() as u32) * 1000 +
-                   total_duration.subsec_nanos() / 1_000_000;
+    let total_ms =
+        (total_duration.as_secs() as u32) * 1000 + total_duration.subsec_nanos() / 1_000_000;
 
     // This tool is designed for microbenchmarking, so iterations are assumed
     // to last from one CPU cycle (a fraction of a nanosecond) to a fraction of
@@ -137,13 +133,11 @@ pub fn benchmark(num_iterations: u32,
 
     // Display the benchmark results, in a fashion that will fit in the output
     // of cargo test in nocapture mode.
-    print!("{} ms ({} iters, ~{}.{} ns/iter): ",
-           total_ms,
-           num_iterations,
-           iter_ns,
-           iter_ns_fraction);
+    print!(
+        "{} ms ({} iters, ~{}.{} ns/iter): ",
+        total_ms, num_iterations, iter_ns, iter_ns_fraction
+    );
 }
-
 
 /// Microbenchmark some operation while another is running in a loop
 ///
@@ -158,7 +152,7 @@ pub fn benchmark(num_iterations: u32,
 pub fn concurrent_benchmark(
     num_iterations: u32,
     iteration_func: impl FnMut(),
-    mut antagonist_func: impl FnMut() + Send + 'static
+    mut antagonist_func: impl FnMut() + Send + 'static,
 ) {
     // Setup a barrier to synchronize benchmark and antagonist startup
     let barrier = Arc::new(Barrier::new(2));
@@ -169,14 +163,12 @@ pub fn concurrent_benchmark(
 
     // Schedule the antagonist thread
     let (antag_barrier, antag_run_flag) = (barrier.clone(), run_flag.clone());
-    let antagonist = thread::spawn(
-        move || {
-            antag_barrier.wait();
-            while antag_run_flag.load(Ordering::Relaxed) {
-                noinline::call_mut(&mut antagonist_func);
-            }
+    let antagonist = thread::spawn(move || {
+        antag_barrier.wait();
+        while antag_run_flag.load(Ordering::Relaxed) {
+            noinline::call_mut(&mut antagonist_func);
         }
-    );
+    });
 
     // Wait for the antagonist to be running, and give it some headstart
     barrier.wait();
@@ -190,13 +182,12 @@ pub fn concurrent_benchmark(
     antagonist.join().unwrap();
 }
 
-
 /// Examples of concurrent testing code
 #[cfg(test)]
 mod tests {
     use std::sync::{
-        Arc,
         atomic::{AtomicUsize, Ordering},
+        Arc,
     };
 
     // Check the behaviour of concurrent atomic swaps and fetch-adds
@@ -217,7 +208,7 @@ mod tests {
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let former_atom = atom.fetch_add(1, Ordering::Relaxed);
                     assert!((former_atom == 0) || (former_atom == last_value));
-                    last_value = former_atom+1;
+                    last_value = former_atom + 1;
                 }
             },
             move || {
@@ -226,7 +217,7 @@ mod tests {
                     let former_atom = atom2.swap(0, Ordering::Relaxed);
                     assert!(former_atom <= ATOMIC_OPS_COUNT);
                 }
-            }
+            },
         );
     }
 
@@ -245,7 +236,7 @@ mod tests {
         // Masks used by each atomic operation
         const AND_MASK: usize = 0b0000_0000_0000_0000; // Clear all bits
         const XOR_MASK: usize = 0b0000_1111_0000_1111; // Flip some bits
-        const OR_MASK: usize  = 0b1111_0000_1111_0000; // Set other bits
+        const OR_MASK: usize = 0b1111_0000_1111_0000; // Set other bits
 
         // Check that concurrent atomic operations work correctly by ensuring
         // that at any point in time, only the 16 low-order bits can be set, and
@@ -257,10 +248,8 @@ mod tests {
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let old_val = atom.fetch_and(AND_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
-                    assert!((old_val & XOR_MASK == XOR_MASK) ||
-                            (old_val & XOR_MASK == 0));
-                    assert!((old_val & OR_MASK == OR_MASK) ||
-                            (old_val & OR_MASK == 0));
+                    assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
+                    assert!((old_val & OR_MASK == OR_MASK) || (old_val & OR_MASK == 0));
                 }
             },
             move || {
@@ -268,10 +257,8 @@ mod tests {
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let old_val = atom2.fetch_or(OR_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
-                    assert!((old_val & XOR_MASK == XOR_MASK) ||
-                            (old_val & XOR_MASK == 0));
-                    assert!((old_val & OR_MASK == OR_MASK) ||
-                            (old_val & OR_MASK == 0));
+                    assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
+                    assert!((old_val & OR_MASK == OR_MASK) || (old_val & OR_MASK == 0));
                 }
             },
             move || {
@@ -279,16 +266,13 @@ mod tests {
                 for _ in 1..(ATOMIC_OPS_COUNT + 1) {
                     let old_val = atom3.fetch_xor(XOR_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
-                    assert!((old_val & XOR_MASK == XOR_MASK) ||
-                            (old_val & XOR_MASK == 0));
-                    assert!((old_val & OR_MASK == OR_MASK) ||
-                            (old_val & OR_MASK == 0));
+                    assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
+                    assert!((old_val & OR_MASK == OR_MASK) || (old_val & OR_MASK == 0));
                 }
-            }
+            },
         );
     }
 }
-
 
 /// Exemples of benchmarking code
 ///
@@ -298,8 +282,8 @@ mod tests {
 #[cfg(test)]
 mod benchs {
     use std::sync::{
-        Arc,
         atomic::{AtomicUsize, Ordering},
+        Arc,
     };
 
     // Benchmark relaxed atomics in sequential code (best case)
@@ -320,8 +304,12 @@ mod benchs {
         let atom2 = atom.clone();
         crate::concurrent_benchmark(
             110_000_000,
-            move || { atom.fetch_add(1, Ordering::SeqCst); },
-            move || { atom2.fetch_add(1, Ordering::SeqCst); }
+            move || {
+                atom.fetch_add(1, Ordering::SeqCst);
+            },
+            move || {
+                atom2.fetch_add(1, Ordering::SeqCst);
+            },
         );
     }
 }

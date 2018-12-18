@@ -5,7 +5,6 @@
 //! benchmarking constructs to be optimized out. This module can be used to
 //! avoid this outcome without altering the function being called itself.
 
-
 /// Inlining barrier for FnOnce
 #[inline(never)]
 pub fn call_once(callable: impl FnOnce()) {
