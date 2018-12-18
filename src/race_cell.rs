@@ -69,10 +69,7 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicUsize, Orderin
 /// Shareable mutable container for triggering and detecting write-after-read
 /// data races in a well-controlled fashion.
 #[derive(Debug)]
-pub struct RaceCell<T>
-where
-    T: AtomicData,
-{
+pub struct RaceCell<T: AtomicData> {
     /// Two copies of a value of type T are made. One is stored on the stack...
     local_contents: T::AtomicWrapper,
 
@@ -88,10 +85,7 @@ where
     remote_version: Box<T::AtomicWrapper>,
 }
 //
-impl<T> RaceCell<T>
-where
-    T: AtomicData,
-{
+impl<T: AtomicData> RaceCell<T> {
     /// Create a new RaceCell with a certain initial content
     pub fn new(value: T) -> Self {
         RaceCell {
@@ -119,10 +113,7 @@ where
     }
 }
 //
-impl<T> Clone for RaceCell<T>
-where
-    T: AtomicData,
-{
+impl<T: AtomicData> Clone for RaceCell<T> {
     /// Making RaceCells cloneable allows putting them in concurrent containers
     fn clone(&self) -> Self {
         let local_copy = self.local_contents.relaxed_load();
@@ -134,10 +125,7 @@ where
     }
 }
 //
-impl<T> Default for RaceCell<T>
-where
-    T: AtomicData + Default,
-{
+impl<T: AtomicData + Default> Default for RaceCell<T> {
     /// A RaceCell has a default value if the inner type has
     fn default() -> Self {
         Self::new(T::default())
@@ -212,9 +200,11 @@ macro_rules! impl_atomic_data {
     )*)
 }
 ///
-impl_atomic_data! { bool  => AtomicBool,
-isize => AtomicIsize,
-usize => AtomicUsize }
+impl_atomic_data! {
+    bool  => AtomicBool,
+    isize => AtomicIsize,
+    usize => AtomicUsize
+}
 ///
 /// Atomic pointers are a bit special as they are generic, for now we will just
 /// treat them as a special case.
