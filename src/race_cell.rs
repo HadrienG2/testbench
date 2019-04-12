@@ -205,10 +205,10 @@ impl_atomic_data! {
     isize => AtomicIsize,
     usize => AtomicUsize
 }
-///
-/// Atomic pointers are a bit special as they are generic, for now we will just
-/// treat them as a special case.
-///
+//
+// Atomic pointers are a bit special as they are generic, for now we will just
+// treat them as a special case.
+//
 impl<V> AtomicData for *mut V {
     type AtomicWrapper = AtomicPtr<V>;
 }

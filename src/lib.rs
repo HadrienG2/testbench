@@ -101,8 +101,8 @@ pub fn concurrent_test_3(
 /// number of times and measures how much time it takes.
 ///
 /// To use it, write your benchmark as an ignored cargo test, put a call to
-/// benchmark() or counting_benchmark() as the last operation, and tell your
-/// user to run the benchmarks via:
+/// benchmark() as the last operation, and tell your user to run the benchmarks
+/// via:
 ///
 ///   $ cargo test --release -- --ignored --nocapture --test-threads=1
 ///
