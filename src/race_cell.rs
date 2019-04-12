@@ -64,7 +64,10 @@
 
 #![deny(missing_docs)]
 
-use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicUsize, Ordering};
+use std::sync::atomic::{
+    AtomicBool, AtomicI16, AtomicI32, AtomicI64, AtomicI8, AtomicIsize, AtomicPtr, AtomicU16,
+    AtomicU32, AtomicU64, AtomicU8, AtomicUsize, Ordering,
+};
 
 /// Shareable mutable container for triggering and detecting write-after-read
 /// data races in a well-controlled fashion.
@@ -202,7 +205,15 @@ macro_rules! impl_atomic_data {
 ///
 impl_atomic_data! {
     bool  => AtomicBool,
+    i8    => AtomicI8,
+    i16   => AtomicI16,
+    i32   => AtomicI32,
+    i64   => AtomicI64,
     isize => AtomicIsize,
+    u8    => AtomicU8,
+    u16   => AtomicU16,
+    u32   => AtomicU32,
+    u64   => AtomicU64,
     usize => AtomicUsize
 }
 //
