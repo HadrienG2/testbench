@@ -13,5 +13,6 @@ edition = "2018"
 
 [badges]
 travis-ci = { repository = "HadrienG2/testbench", branch = "master" }
+maintenance = { status = "passively-maintained" }
 
 [dependencies]
