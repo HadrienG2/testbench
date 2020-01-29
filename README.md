@@ -2,7 +2,7 @@
 
 [![On crates.io](https://img.shields.io/crates/v/testbench.svg)](https://crates.io/crates/testbench)
 [![On docs.rs](https://docs.rs/testbench/badge.svg)](https://docs.rs/testbench/)
-[![Build status](https://travis-ci.org/HadrienG2/testbench.svg?branch=master)](https://travis-ci.org/HadrienG2/testbench)
+![Main CI](https://github.com/HadrienG2/testbench/workflows/Main%20CI/badge.svg)
 ![Requires rustc 1.34+](https://img.shields.io/badge/rustc-1.34+-red.svg)
 
 ## What is this?
