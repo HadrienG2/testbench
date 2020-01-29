@@ -202,7 +202,7 @@ macro_rules! impl_atomic_data {
         }
     )*)
 }
-///
+//
 impl_atomic_data! {
     bool  => AtomicBool,
     i8    => AtomicI8,
