@@ -119,8 +119,7 @@ pub fn benchmark(num_iterations: u32, mut iteration: impl FnMut()) {
     // Reproducible benchmarks (<10% variance) usually take between a couple of
     // seconds and a couple of minutes, so miliseconds are the right timing unit
     // for the duration of the whole benchmark.
-    let total_ms =
-        (total_duration.as_secs() as u32) * 1000 + total_duration.subsec_millis();
+    let total_ms = (total_duration.as_secs() as u32) * 1000 + total_duration.subsec_millis();
 
     // This tool is designed for microbenchmarking, so iterations are assumed
     // to last from one CPU cycle (a fraction of a nanosecond) to a fraction of
