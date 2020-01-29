@@ -1,6 +1,6 @@
 [package]
 name = "testbench"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 description = "Testing and benchmarking tools for concurrent Rust code"
 documentation = "https://docs.rs/testbench/"
@@ -12,7 +12,6 @@ license = "MPL-2.0"
 edition = "2018"
 
 [badges]
-travis-ci = { repository = "HadrienG2/testbench", branch = "master" }
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
