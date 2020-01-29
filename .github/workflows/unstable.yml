@@ -19,7 +19,7 @@ env:
 jobs:
   # Formatter output and lints don't depend on the operating system, and only
   # need to be tested on nightly since we don't care about older expectations.
-  format:
+  check:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,7 +54,7 @@ jobs:
 
 
   # Run the tests on all supported OSes and Rust versions
-  run:
+  test:
     runs-on: ${{ matrix.os }}
 
     strategy:
