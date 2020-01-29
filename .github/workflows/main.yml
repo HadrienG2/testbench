@@ -1,0 +1,104 @@
+# Based on templates from https://github.com/actions-rs
+#
+# NOTE: We don't cache the toolchain because bringing back the cache was
+#       measured to take more time than downloading the toolchain on Github's
+#       current setup. And it also brought suspicious file permission warnings
+#       on unpacking...
+#
+# NOTE: This crate has no dependencies, so there's no need to cache the
+#       Cargo registry and index.
+#
+# FIXME: For now, must be manually kept in sync with unstable.yml
+
+on: [push, pull_request]
+
+name: Main CI
+
+env:
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # Formatter output and lints don't depend on the operating system, and only
+  # need to be tested on stable since we don't care about older expectations.
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt,clippy
+
+      - name: Check format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Cache Cargo check target directory
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}
+
+      - name: Type-check the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: Check clippy lints
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+
+  # Run the tests on all supported OSes and Rust versions
+  run:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        rust:
+          - stable
+          - 1.34.0  # Minimum supported Rust version
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Cache Cargo test target directory
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: cargo-target_test-os_${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+
+      - name: Run basic tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: Run concurrent tests and benchmarks
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release -- --ignored --nocapture --test-threads=1
