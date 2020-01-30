@@ -6,7 +6,9 @@
 #       on unpacking...
 #
 # NOTE: This crate has no dependencies, so there's no need to cache the
-#       Cargo registry and index.
+#       Cargo registry and index. Furthermore, it is so small that even the
+#       effect of caching the cargo target directory was measured to be drowned
+#       in the noise.
 #
 # FIXME: For now, must be manually kept in sync with unstable.yml
 
@@ -41,12 +43,6 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-
-      - name: Cache Cargo check target directory
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
@@ -85,12 +81,6 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-
-      - name: Cache Cargo test target directory
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: cargo-target_test-os_${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Run basic tests
         uses: actions-rs/cargo@v1
