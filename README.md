@@ -2,7 +2,7 @@
 
 [![On crates.io](https://img.shields.io/crates/v/testbench.svg)](https://crates.io/crates/testbench)
 [![On docs.rs](https://docs.rs/testbench/badge.svg)](https://docs.rs/testbench/)
-![Main CI](https://github.com/HadrienG2/testbench/workflows/Main%20CI/badge.svg)
+[![Continuous Integration](https://github.com/HadrienG2/testbench/workflows/Continuous%20Integration/badge.svg)](https://github.com/HadrienG2/testbench/actions?query=workflow%3A%22Continuous+Integration%22)
 ![Requires rustc 1.34+](https://img.shields.io/badge/rustc-1.34+-red.svg)
 
 ## What is this?
