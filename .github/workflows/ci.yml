@@ -29,7 +29,7 @@ env:
 
 jobs:
   # Formatter output and lints don't depend on the operating system, and only
-  # need to be tested on stable since we don't care about older expectations.
+  # need to be tested on the latest supported release of each CI run.
   check:
     runs-on: ubuntu-latest
 
@@ -73,7 +73,7 @@ jobs:
           args: -- -D warnings
 
 
-  # Run the tests on all supported OSes and Rust versions
+  # Run the tests on all supported OSes and stable Rust versions (main CI)
   test-stable:
     if: github.event_name != 'schedule'
 
@@ -111,7 +111,8 @@ jobs:
           command: test
           args: --release -- --ignored --nocapture --test-threads=1
 
-  # Run the tests on upcoming Rust versions
+
+  # Run the tests on upcoming Rust versions (scheduled CI)
   test-unstable:
     if: github.event_name == 'schedule'
 
