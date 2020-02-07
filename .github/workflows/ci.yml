@@ -113,6 +113,10 @@ jobs:
 
 
   # Run the tests on upcoming Rust versions (scheduled CI)
+  #
+  # FIXME: There should be a way to use conditional build matrices without
+  #        duplicating the whole job recipe...
+  #
   test-unstable:
     if: github.event_name == 'schedule'
 
