@@ -13,5 +13,3 @@ edition = "2018"
 
 [badges]
 maintenance = { status = "passively-maintained" }
-
-[dependencies]
