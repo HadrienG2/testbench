@@ -52,6 +52,10 @@ use std::{
 /// however, multiple versions of this function must be provided, each
 /// associated with a different functor tuple size.
 ///
+/// # Panics
+///
+/// This function will propagate panics from the inner functors.
+///
 pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static, f2: impl FnOnce() + Send + 'static) {
     // Setup a barrier to synchronize thread startup
     let barrier1 = Arc::new(Barrier::new(2));
@@ -76,6 +80,10 @@ pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static, f2: impl FnOnce() +
 /// This is a variant of concurrent_test_2 that works with three functors
 /// instead of two. It is hoped that future evolutions of Rust will render this
 /// (light) code duplication obsolete, in favor of some variadic design.
+///
+/// # Panics
+///
+/// This function will propagate panics from the inner functors.
 ///
 pub fn concurrent_test_3(
     f1: impl FnOnce() + Send + 'static,
@@ -122,6 +130,10 @@ pub fn concurrent_test_3(
 ///
 /// This is a dreadful hack. But for now, it's the best that I've thought of.
 ///
+/// # Panics
+///
+/// This function will propagate panics from the inner functors.
+///
 pub fn benchmark(num_iterations: u32, mut iteration: impl FnMut()) {
     // Run the user-provided operation in a loop
     let start_time = Instant::now();
@@ -161,6 +173,10 @@ pub fn benchmark(num_iterations: u32, mut iteration: impl FnMut()) {
 /// For this reason, it is often useful to also measure the performance of one
 /// operation as another "antagonist" operation is also running in a background
 /// thread. This function implements such concurrent benchmarking.
+///
+/// # Panics
+///
+/// This function will propagate panics from the inner functors.
 ///
 pub fn concurrent_benchmark(
     num_iterations: u32,

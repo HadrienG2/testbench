@@ -71,7 +71,7 @@ use std::sync::atomic::{
 
 /// Shareable mutable container for triggering and detecting write-after-read
 /// data races in a well-controlled fashion.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct RaceCell<T: AtomicData> {
     /// Two copies of a value of type T are made. One is stored on the stack...
     local_contents: T::AtomicWrapper,
@@ -125,13 +125,6 @@ impl<T: AtomicData> Clone for RaceCell<T> {
             local_contents: T::AtomicWrapper::new(local_copy),
             remote_version: Box::new(T::AtomicWrapper::new(remote_copy)),
         }
-    }
-}
-//
-impl<T: AtomicData + Default> Default for RaceCell<T> {
-    /// A RaceCell has a default value if the inner type has
-    fn default() -> Self {
-        Self::new(T::default())
     }
 }
 
