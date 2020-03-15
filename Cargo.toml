@@ -1,5 +1,16 @@
 [package]
 name = "testbench"
+#
+# Release checklist:
+#
+# - Check all TODOs, FIXMEs, unwraps, and expects: can I do better now?
+# - Cross-check all public API documentation, update as needed.
+# - Update changelog.
+# - Update version number in Cargo.toml
+# - Roll a git tag
+# - Push it, make sure both the tag and master pass CI.
+# - Cargo publish.
+#
 version = "0.7.2"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 description = "Testing and benchmarking tools for concurrent Rust code"
