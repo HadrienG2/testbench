@@ -7,11 +7,12 @@ name = "testbench"
 # - Cross-check all public API documentation, update as needed.
 # - Update changelog.
 # - Update version number in Cargo.toml
-# - Roll a git tag
+# - Roll an annotated git tag
 # - Push it, make sure both the tag and master pass CI.
 # - Cargo publish.
+# - Add a github release
 #
-version = "0.7.2"
+version = "0.7.3"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 description = "Testing and benchmarking tools for concurrent Rust code"
 documentation = "https://docs.rs/testbench/"
