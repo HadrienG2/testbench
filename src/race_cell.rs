@@ -1,5 +1,5 @@
-//! This module contains shareable mutable containers designed for enabling
-//! and detecting race conditions in thread synchronization testing code.
+//! Shareable mutable containers easing detection of race conditions in thread
+//! synchronization testing code.
 //!
 //! # Motivation
 //!
