@@ -12,7 +12,21 @@
 //! For examples of this crate at work, look at its "tests" and "benchs"
 //! submodules, which showcase expected usage.
 
-#![deny(missing_docs)]
+#![warn(
+    anonymous_parameters,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    missing_docs,
+    nonstandard_style,
+    rust_2018_idioms,
+    single_use_lifetimes,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unused_extern_crates,
+    unused_qualifications,
+    variant_size_differences
+)]
 
 pub mod noinline;
 pub mod race_cell;
