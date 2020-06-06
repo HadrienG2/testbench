@@ -103,11 +103,10 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
+            ~/.cargo
             target
           # NOTE: No Cargo.lock here
-          key: ${{ matrix.os }}-cargo-${{ matrix.rust }}
+          key: ${{ matrix.os }}-cargo-${{ matrix.rust }}-fullcargo
 
       - name: Run basic tests
         uses: actions-rs/cargo@v1
