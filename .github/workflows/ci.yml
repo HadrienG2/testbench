@@ -101,9 +101,11 @@ jobs:
           override: true
 
       - run: |
-          which rustup
-          ls ~/.rustup
           rustup show
+          echo "---"
+          ls ~/.rustup
+          echo "---"
+          ls ~/.rustup/toolchains
 
       - name: Run basic tests
         uses: actions-rs/cargo@v1
