@@ -99,6 +99,7 @@ jobs:
           path: |
             ~/.rustup
             target
+          # NOTE: Remove this if caching works
           key: rust-${{ matrix.os }}-${{ matrix.rust }}
 
       - run: |
