@@ -95,6 +95,8 @@ jobs:
 
       - uses: actions/cache@v2
         with:
+          # NOTE: - Not caching .cargo dirs as this project has no deps
+          #       - Not caching target dir as this project is too small
           path: |
             ~/.rustup/toolchains/${{ matrix.rust }}-*
           key: rustuptoolchain-${{ matrix.os }}-${{ matrix.rust }}
