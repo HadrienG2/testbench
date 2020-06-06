@@ -98,8 +98,10 @@ jobs:
           # NOTE: - Not caching .cargo dirs as this project has no deps
           #       - Not caching target dir as this project is too small
           path: |
+            ~/.rustup/settings.toml
             ~/.rustup/toolchains/${{ matrix.rust }}-*
-          key: rustuptoolchain-${{ matrix.os }}-${{ matrix.rust }}
+            ~/.rustup/update-hashes/${{ matrix.rust }}-*
+          key: rustupdetailed-${{ matrix.os }}-${{ matrix.rust }}
 
       - run: |
           rustup show
