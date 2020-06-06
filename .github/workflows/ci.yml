@@ -7,10 +7,6 @@
 #
 # Here's why we don't cache much currently.
 #
-# - Toolchain caching is hard to do correctly (there are permission problems
-#   since the toolchain is not installed in the home directory, we'd need to
-#   override toolchain's defaut directory to avoid that) and was not measured to
-#   be worthwhile on operating systems where it actually seems to work.
 # - This crate has no dependencies, so that's no point in caching the Cargo
 #   registry and index, which aren't used by the job.
 # - The crate is so small that caching the project's cargo target directory
