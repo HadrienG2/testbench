@@ -105,7 +105,6 @@ jobs:
           path: |
             ~/.cargo
             target
-          # NOTE: No Cargo.lock here
           key: ${{ matrix.os }}-cargo-${{ matrix.rust }}-fullcargo
 
       - name: Run basic tests
