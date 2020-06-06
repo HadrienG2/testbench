@@ -5,12 +5,8 @@
 # - Two times a month, a scheduled job makes sure that the code remains
 #   compatible and lint-free on upcoming Rust toolchains (beta and nightly).
 #
-# Here's why we don't cache much currently.
-#
-# - This crate has no dependencies, so that's no point in caching the Cargo
-#   registry and index, which aren't used by the job.
-# - The crate is so small that caching the project's cargo target directory
-#   brings no statistically significant performance benefit.
+# The Cargo registry and index are not cached because they are not used for this
+# tiny crate, which has no dependencies.
 
 on:
   push:
@@ -42,7 +38,7 @@ jobs:
             ~/.rustup/toolchains/stable-*
             ~/.rustup/update-hashes/stable-*
             target
-          key: check-${{ matrix.os }}
+          key: check
 
       - name: Install stable toolchain
         if: github.event_name != 'schedule'
