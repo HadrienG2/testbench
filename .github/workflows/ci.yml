@@ -99,6 +99,8 @@ jobs:
           path: |
             /home/runner/.rustup
             target
+          # NOTE: Hack because of hardcoded home dir. If this works out, try
+          #       another run with just "~/.rustup"
           key: rusthack-${{ matrix.os }}-${{ matrix.rust }}
 
       - name: Install toolchain
