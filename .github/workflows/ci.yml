@@ -93,21 +93,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - uses: actions/cache@v2
-        with:
-          # NOTE: No need to cache ~/.cargo, the crate has no deps
-          #       It seems ~/.rustup cannot be cached due to perm issues
-          path: |
-            target
-          key: rust-target-${{ matrix.os }}-${{ matrix.rust }}
-
-      - run: |
-          rustup show
-          echo "---"
-          ls ~/.rustup
-          echo "---"
-          ls ~/.rustup/toolchains
-
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -115,12 +100,12 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
-      - run: |
-          rustup show
-          echo "---"
-          ls ~/.rustup
-          echo "---"
-          ls ~/.rustup/toolchains
+      - uses: actions/cache@v2
+        with:
+          # NOTE: No need to cache ~/.cargo, the crate has no deps
+          #       It seems ~/.rustup cannot be cached, maybe a perm issue?
+          path: target
+          key: rust-target-${{ matrix.os }}-${{ matrix.rust }}
 
       - name: Run basic tests
         uses: actions-rs/cargo@v1
