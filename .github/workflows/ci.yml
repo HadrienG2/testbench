@@ -95,6 +95,7 @@ jobs:
 
       - uses: actions/cache@v2
         with:
+          # NOTE: No need to cache ~/.cargo, the crate has no deps
           path: |
             /usr/share/rust/.cargo
             target
