@@ -7,6 +7,10 @@
 #
 # The Cargo registry and index are not cached because they are not used for this
 # tiny crate, which has no dependencies.
+#
+# No caching of Rust toolchains or target directories is performed on unstable
+# runs, since those runs are rare and the caches would be invalidated inbetween
+# two of them (especially for nightly toolchains).
 
 on:
   push:
@@ -48,9 +52,6 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt,clippy
-
-      # NOTE: Not caching toolchains or target directories on unstable runs,
-      #       since the cache will always be invalidated.
 
       - name: Install nightly toolchain
         if: github.event_name == 'schedule'
@@ -151,9 +152,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-
-      # NOTE: Not caching toolchains or target directories on unstable runs,
-      #       since the cache will always be invalidated.
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
