@@ -93,6 +93,21 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      - uses: actions/cache@v2
+        with:
+          # NOTE: No need to cache ~/.cargo, the crate has no deps
+          path: |
+            ~/.rustup
+            target
+          key: rust-${{ matrix.os }}-${{ matrix.rust }}
+
+      - run: |
+          rustup show
+          echo "---"
+          ls ~/.rustup
+          echo "---"
+          ls ~/.rustup/toolchains
+
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
