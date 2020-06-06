@@ -96,8 +96,8 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: |
-            ~/.rustup/*
-          key: rustupcontents-${{ matrix.os }}-${{ matrix.rust }}
+            ~/.rustup/toolchains/${{ matrix.rust }}-*
+          key: rustuptoolchain-${{ matrix.os }}-${{ matrix.rust }}
 
       - run: |
           rustup show
