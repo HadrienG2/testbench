@@ -53,6 +53,9 @@ jobs:
           override: true
           components: rustfmt,clippy
 
+      # NOTE: Not caching toolchains or target directories on unstable runs,
+      #       since the cache will always be invalidated.
+
       - name: Install nightly toolchain
         if: github.event_name == 'schedule'
         uses: actions-rs/toolchain@v1
