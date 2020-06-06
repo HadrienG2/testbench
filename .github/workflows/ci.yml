@@ -106,6 +106,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
+          # NOTE: No Cargo.lock here
           key: ${{ matrix.os }}-cargo-${{ matrix.rust }}
 
       - name: Run basic tests
