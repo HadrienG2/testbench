@@ -95,20 +95,11 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          # NOTE: - Not caching .cargo dirs as this project has no deps
-          #       - Not caching target dir as this project is too small
           path: |
             ~/.rustup/settings.toml
             ~/.rustup/toolchains/${{ matrix.rust }}-*
             ~/.rustup/update-hashes/${{ matrix.rust }}-*
           key: rustupdetailed-${{ matrix.os }}-${{ matrix.rust }}
-
-      - run: |
-          rustup show
-          echo "---"
-          ls ~/.rustup
-          echo "---"
-          ls ~/.rustup/toolchains
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -116,13 +107,6 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-
-      - run: |
-          rustup show
-          echo "---"
-          ls ~/.rustup
-          echo "---"
-          ls ~/.rustup/toolchains
 
       - name: Run basic tests
         uses: actions-rs/cargo@v1
