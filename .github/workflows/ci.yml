@@ -97,9 +97,9 @@ jobs:
         with:
           # NOTE: No need to cache ~/.cargo, the crate has no deps
           path: |
-            /usr/share/rust/.cargo
+            /home/runner/.rustup
             target
-          key: ${{ matrix.os }}-fullcargo-${{ matrix.rust }}
+          key: rusthack-${{ matrix.os }}-${{ matrix.rust }}
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
