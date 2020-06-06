@@ -96,9 +96,9 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: |
-            ~/.cargo
+            /usr/share/rust/.cargo
             target
-          key: ${{ matrix.os }}-cargo-${{ matrix.rust }}-fullcargo
+          key: ${{ matrix.os }}-fullcargo-${{ matrix.rust }}
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
