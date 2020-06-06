@@ -96,11 +96,10 @@ jobs:
       - uses: actions/cache@v2
         with:
           # NOTE: No need to cache ~/.cargo, the crate has no deps
+          #       It seems ~/.rustup cannot be cached due to perm issues
           path: |
-            ~/.rustup
             target
-          # NOTE: Remove this if caching works
-          key: rust-${{ matrix.os }}-${{ matrix.rust }}
+          key: rust-target-${{ matrix.os }}-${{ matrix.rust }}
 
       - run: |
           rustup show
