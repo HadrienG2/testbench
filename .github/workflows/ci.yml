@@ -100,6 +100,14 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ matrix.os }}-cargo-${{ matrix.rust }}
+
       - name: Run basic tests
         uses: actions-rs/cargo@v1
         with:
