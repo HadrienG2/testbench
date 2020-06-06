@@ -93,6 +93,17 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.rustup/*
+          key: rustupcontents-${{ matrix.os }}-${{ matrix.rust }}
+
+      - run: |
+          which rustup
+          ls ~/.rustup
+          rustup show
+
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -100,10 +111,10 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
-      - uses: actions/cache@v2
-        with:
-          path: target
-          key: rust-target-${{ matrix.os }}-${{ matrix.rust }}
+      - run: |
+          which rustup
+          ls ~/.rustup
+          rustup show
 
       - name: Run basic tests
         uses: actions-rs/cargo@v1
