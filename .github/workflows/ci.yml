@@ -5,16 +5,8 @@
 # - Two times a month, a scheduled job makes sure that the code remains
 #   compatible and lint-free on upcoming Rust toolchains (beta and nightly).
 #
-# Here's why we don't cache much currently.
-#
-# - Toolchain caching is hard to do correctly (there are permission problems
-#   since the toolchain is not installed in the home directory, we'd need to
-#   override toolchain's defaut directory to avoid that) and was not measured to
-#   be worthwhile on operating systems where it actually seems to work.
-# - This crate has no dependencies, so that's no point in caching the Cargo
-#   registry and index, which aren't used by the job.
-# - The crate is so small that caching the project's cargo target directory
-#   brings no statistically significant performance benefit.
+# The Cargo registry and index are not cached because they are not used for this
+# tiny crate, which has no dependencies.
 
 on:
   push:
@@ -37,6 +29,17 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      - name: Cache stable toolchain and target directory
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.rustup/settings.toml
+            ~/.rustup/toolchains/stable-*
+            ~/.rustup/update-hashes/stable-*
+            target
+          key: check
+
       - name: Install stable toolchain
         if: github.event_name != 'schedule'
         uses: actions-rs/toolchain@v1
@@ -45,6 +48,9 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt,clippy
+
+      # NOTE: Not caching toolchains or target directories on unstable runs,
+      #       since the cache will always be invalidated.
 
       - name: Install nightly toolchain
         if: github.event_name == 'schedule'
@@ -93,6 +99,16 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      - name: Cache toolchain and target directory
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.rustup/settings.toml
+            ~/.rustup/toolchains/${{ matrix.rust }}-*
+            ~/.rustup/update-hashes/${{ matrix.rust }}-*
+            target
+          key: test-${{ matrix.os }}-${{ matrix.rust }}
+
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -135,6 +151,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
+
+      # NOTE: Not caching toolchains or target directories on unstable runs,
+      #       since the cache will always be invalidated.
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
