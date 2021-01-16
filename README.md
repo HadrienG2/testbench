@@ -9,6 +9,8 @@
 
 Just a simple collection of testing and benchmarking tools for concurrent Rust code.
 
+The "benchmarking tool" part has been much reduced in v0.8 since I'm now using criterion.
+
 
 ## License
 
