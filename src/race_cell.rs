@@ -242,7 +242,7 @@ impl<V> AtomicLoadStore for AtomicPtr<V> {
 #[cfg(test)]
 mod tests {
     use super::{AtomicLoadStore, RaceCell, Racey};
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
 
     /// A RaceCell should be created in a consistent and correct state
     #[test]
@@ -290,23 +290,21 @@ mod tests {
         const WRITES_COUNT: usize = 100_000_000;
 
         // RaceCell in which the writes will be carried out
-        let initial_value = 0usize;
-        let cell1 = Arc::new(RaceCell::new(initial_value));
-        let cell2 = cell1.clone();
+        let cell = RaceCell::new(0);
 
         // Make sure that RaceCell does expose existing data races, with a
         // detection probability better than 1% for very obvious ones :)
         crate::concurrent_test_2(
-            move || {
+            || {
                 for i in 1..=WRITES_COUNT {
-                    cell1.set(i);
+                    cell.set(i);
                 }
             },
-            move || {
+            || {
                 let mut last_value = 0;
                 let mut data_race_count = 0usize;
                 while last_value != WRITES_COUNT {
-                    match cell2.get() {
+                    match cell.get() {
                         Racey::Consistent(value) => last_value = value,
                         Racey::Inconsistent => data_race_count += 1,
                     }
@@ -330,22 +328,20 @@ mod tests {
         const WRITES_COUNT: usize = 10_000_000;
 
         // Mutex-protected RaceCell in which the writes will be carried out
-        let initial_value = 0usize;
-        let cell1 = Arc::new(Mutex::new(RaceCell::new(initial_value)));
-        let cell2 = cell1.clone();
+        let cell = Mutex::new(RaceCell::new(0));
 
         // Make sure that RaceCell does not incorrectly detect race conditions
         crate::concurrent_test_2(
-            move || {
+            || {
                 for i in 1..=WRITES_COUNT {
-                    cell1.lock().unwrap().set(i);
+                    cell.lock().unwrap().set(i);
                 }
             },
-            move || {
+            || {
                 let mut last_value = 0;
                 let mut data_race_count = 0usize;
                 while last_value != WRITES_COUNT {
-                    match cell2.lock().unwrap().get() {
+                    match cell.lock().unwrap().get() {
                         Racey::Consistent(value) => last_value = value,
                         Racey::Inconsistent => data_race_count += 1,
                     }

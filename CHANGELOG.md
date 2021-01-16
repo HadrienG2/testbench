@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _No unreleased changes in the pipeline at the moment._
 
 
+## [0.8] - 2021-01-16
+
+### Added
+
+- Extracted "run under contention" part of contended_benchmark
+
+### Changed
+
+- Concurrent testing and benchmarking tools now used scoped threads, eliminating
+  the need for Arc'ing shared data.
+- Since criterion has become good enough these days, this crate does not provide
+  benchmarking tools anymore aside from the aforementioned one.
+
+
 ## [0.7.3] - 2020-03-15
 
 ### Added
@@ -152,7 +166,8 @@ _No unreleased changes in the pipeline at the moment._
 
 
 
-[Unreleased]: https://github.com/HadrienG2/testbench/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/HadrienG2/testbench/compare/v0.8.0...HEAD
+[0.7.3]: https://github.com/HadrienG2/testbench/compare/v0.7.3...v0.8.0
 [0.7.3]: https://github.com/HadrienG2/testbench/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/HadrienG2/testbench/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/HadrienG2/testbench/compare/v0.7.0...v0.7.1

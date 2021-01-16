@@ -31,13 +31,10 @@
 pub mod noinline;
 pub mod race_cell;
 
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Barrier,
-    },
-    thread,
-    time::{Duration, Instant},
+use crossbeam_utils::thread;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Barrier,
 };
 
 /// Test that running two operations concurrently works
@@ -56,23 +53,17 @@ use std::{
 ///
 /// This function will propagate panics from the inner functors.
 ///
-pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static, f2: impl FnOnce() + Send + 'static) {
-    // Setup a barrier to synchronize thread startup
-    let barrier1 = Arc::new(Barrier::new(2));
-    let barrier2 = barrier1.clone();
-
-    // Start the first task
-    let thread1 = thread::spawn(move || {
-        barrier1.wait();
-        noinline::call_once(f1);
-    });
-
-    // Run the second task
-    barrier2.wait();
-    noinline::call_once(f2);
-
-    // Make sure that the first task completed properly
-    thread1.join().unwrap();
+pub fn concurrent_test_2(f1: impl FnOnce() + Send, f2: impl FnOnce() + Send) {
+    let barrier = Barrier::new(2);
+    thread::scope(|s| {
+        s.spawn(|_| {
+            barrier.wait();
+            noinline::call_once(f1);
+        });
+        barrier.wait();
+        noinline::call_once(f2);
+    })
+    .expect("Failed to join thread running f1");
 }
 
 /// Test that running three operations concurrently works
@@ -86,85 +77,27 @@ pub fn concurrent_test_2(f1: impl FnOnce() + Send + 'static, f2: impl FnOnce() +
 /// This function will propagate panics from the inner functors.
 ///
 pub fn concurrent_test_3(
-    f1: impl FnOnce() + Send + 'static,
-    f2: impl FnOnce() + Send + 'static,
-    f3: impl FnOnce() + Send + 'static,
+    f1: impl FnOnce() + Send,
+    f2: impl FnOnce() + Send,
+    f3: impl FnOnce() + Send,
 ) {
-    // Setup a barrier to synchronize thread startup
-    let barrier1 = Arc::new(Barrier::new(3));
-    let barrier2 = barrier1.clone();
-    let barrier3 = barrier1.clone();
-
-    // Start the first task
-    let thread1 = thread::spawn(move || {
-        barrier1.wait();
-        noinline::call_once(f1);
-    });
-
-    // Start the second task
-    let thread2 = thread::spawn(move || {
-        barrier2.wait();
-        noinline::call_once(f2);
-    });
-
-    // Run the third task
-    barrier3.wait();
-    noinline::call_once(f3);
-
-    // Make sure that the first two tasks completed properly
-    thread1.join().unwrap();
-    thread2.join().unwrap();
+    let barrier = Barrier::new(3);
+    thread::scope(|s| {
+        s.spawn(|_| {
+            barrier.wait();
+            noinline::call_once(f1);
+        });
+        s.spawn(|_| {
+            barrier.wait();
+            noinline::call_once(f2);
+        });
+        barrier.wait();
+        noinline::call_once(f3);
+    })
+    .expect("Failed to join threads running f1 and f2");
 }
 
-/// Microbenchmark some simple operation by running it N times
-///
-/// This simple benchmark harness is meant as a cheap and hackish substitute for
-/// cargo benchmarks in Stable Rust. It runs a user-provided operation a certain
-/// number of times and measures how much time it takes.
-///
-/// To use it, write your benchmark as an ignored cargo test, put a call to
-/// benchmark() as the last operation, and tell your user to run the benchmarks
-/// via:
-///
-///   $ cargo test --release -- --ignored --nocapture --test-threads=1
-///
-/// This is a dreadful hack. But for now, it's the best that I've thought of.
-///
-/// # Panics
-///
-/// This function will propagate panics from the inner functors.
-///
-pub fn benchmark(num_iterations: u32, mut iteration: impl FnMut()) {
-    // Run the user-provided operation in a loop
-    let start_time = Instant::now();
-    for _ in 0..num_iterations {
-        noinline::call_mut(&mut iteration);
-    }
-    let total_duration = start_time.elapsed();
-
-    // Reproducible benchmarks (<10% variance) usually take between a couple of
-    // seconds and a couple of minutes, so miliseconds are the right timing unit
-    // for the duration of the whole benchmark.
-    let total_ms = (total_duration.as_secs() as u32) * 1000 + total_duration.subsec_millis();
-
-    // This tool is designed for microbenchmarking, so iterations are assumed
-    // to last from one CPU cycle (a fraction of a nanosecond) to a fraction of
-    // a second. Longer durations will require multi-resolution formatting.
-    let hundred_iter_duration = total_duration * 100 / num_iterations;
-    let iter_duration = hundred_iter_duration / 100;
-    assert_eq!(iter_duration.as_secs(), 0);
-    let iter_ns = iter_duration.subsec_nanos();
-    let iter_ns_fraction = hundred_iter_duration.subsec_nanos() % 100;
-
-    // Display the benchmark results, in a fashion that will fit in the output
-    // of cargo test in nocapture mode.
-    print!(
-        "{} ms ({} iters, ~{}.{} ns/iter): ",
-        total_ms, num_iterations, iter_ns, iter_ns_fraction
-    );
-}
-
-/// Microbenchmark some operation while another is running in a loop
+/// Perform some operation while another is running in a loop in another thread
 ///
 /// For multithreaded code, benchmarking the performance of isolated operations
 /// is usually only half of the story. Synchronization and memory contention can
@@ -172,51 +105,48 @@ pub fn benchmark(num_iterations: u32, mut iteration: impl FnMut()) {
 ///
 /// For this reason, it is often useful to also measure the performance of one
 /// operation as another "antagonist" operation is also running in a background
-/// thread. This function implements such concurrent benchmarking.
+/// thread. This function helps you with setting up such an antagonist thread.
 ///
-/// # Panics
+/// Note that the antagonist function must be designed in such a way as not to
+/// be optimized out by the compiler when run in a tight loop. Here are some
+/// ways to do this:
 ///
-/// This function will propagate panics from the inner functors.
+/// - You can hide the fact that the code is run in a loop by preventing the
+///   compiler from inlining it there, see this crate's `noinline::call_mut()`.
+/// - You can obscure the fact that inputs are always the same and outputs are
+///   are not used by using `core::hint::black_box()` on nightly Rust, or its
+///   emulation by the Criterion benchmarking crate.
+/// - You can generate inputs that the compiler cannot guess using a random
+///   number generator, and use your outputs by sending them through some sort
+///   of reduction function (sum, min, max...) and checking the result.
 ///
-pub fn concurrent_benchmark(
-    num_iterations: u32,
-    iteration_func: impl FnMut(),
-    mut antagonist_func: impl FnMut() + Send + 'static,
-) {
-    // Setup a barrier to synchronize benchmark and antagonist startup
-    let barrier = Arc::new(Barrier::new(2));
-
-    // Setup an atomic "continue" flag to shut down the antagonist at
-    // the end of the benchmarking procedure
-    let run_flag = Arc::new(AtomicBool::new(true));
-
-    // Schedule the antagonist thread
-    let (antag_barrier, antag_run_flag) = (barrier.clone(), run_flag.clone());
-    let antagonist = thread::spawn(move || {
-        antag_barrier.wait();
-        while antag_run_flag.load(Ordering::Relaxed) {
-            noinline::call_mut(&mut antagonist_func);
-        }
-    });
-
-    // Wait for the antagonist to be running, and give it some headstart
-    barrier.wait();
-    thread::sleep(Duration::from_millis(10));
-
-    // Run the benchmark
-    benchmark(num_iterations, iteration_func);
-
-    // Stop the antagonist and check that nothing went wrong on its side
-    run_flag.store(false, Ordering::Relaxed);
-    antagonist.join().unwrap();
+pub fn run_under_contention<AntagonistResult, BenchmarkResult>(
+    mut antagonist: impl FnMut() -> AntagonistResult + Send,
+    mut benchmark: impl FnMut() -> BenchmarkResult,
+) -> BenchmarkResult {
+    let start_barrier = Barrier::new(2);
+    let continue_flag = AtomicBool::new(true);
+    thread::scope(|s| {
+        s.spawn(|_| {
+            start_barrier.wait();
+            while continue_flag.load(Ordering::Relaxed) {
+                antagonist();
+            }
+        });
+        start_barrier.wait();
+        let result = benchmark();
+        continue_flag.store(false, Ordering::Relaxed);
+        result
+    })
+    .expect("Failed to join antagonist thread")
 }
 
 /// Examples of concurrent testing code
 #[cfg(test)]
 mod tests {
-    use std::sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
+    use std::{
+        sync::atomic::{AtomicUsize, Ordering},
+        time::Duration,
     };
 
     // Check the behaviour of concurrent atomic swaps and fetch-adds
@@ -226,13 +156,12 @@ mod tests {
         const ATOMIC_OPS_COUNT: usize = 100_000_000;
 
         // Create a shared atomic variable
-        let atom = Arc::new(AtomicUsize::new(0));
-        let atom2 = atom.clone();
+        let atom = AtomicUsize::new(0);
 
         // Check that concurrent atomic operations work correctly
         let mut last_value = 0;
-        crate::concurrent_test_2(
-            move || {
+        super::concurrent_test_2(
+            || {
                 // One thread continuously increments the atomic variable...
                 for _ in 1..=ATOMIC_OPS_COUNT {
                     let former_atom = atom.fetch_add(1, Ordering::Relaxed);
@@ -240,10 +169,10 @@ mod tests {
                     last_value = former_atom + 1;
                 }
             },
-            move || {
+            || {
                 // ...as another continuously resets it to zero
                 for _ in 1..=ATOMIC_OPS_COUNT {
-                    let former_atom = atom2.swap(0, Ordering::Relaxed);
+                    let former_atom = atom.swap(0, Ordering::Relaxed);
                     assert!(former_atom <= ATOMIC_OPS_COUNT);
                 }
             },
@@ -258,9 +187,7 @@ mod tests {
 
         // Create a shared atomic variable. Even though this is an atomic Usize,
         // we will only use the 16 low-order bits for maximal portability.
-        let atom = Arc::new(AtomicUsize::new(0));
-        let atom2 = atom.clone();
-        let atom3 = atom.clone();
+        let atom = AtomicUsize::new(0);
 
         // Masks used by each atomic operation
         const AND_MASK: usize = 0b0000_0000_0000_0000; // Clear all bits
@@ -271,8 +198,8 @@ mod tests {
         // that at any point in time, only the 16 low-order bits can be set, and
         // the grouped sets of bits in the masks above are either all set or
         // all cleared in any observable state.
-        crate::concurrent_test_3(
-            move || {
+        super::concurrent_test_3(
+            || {
                 // One thread runs fetch-ands in a loop...
                 for _ in 1..=ATOMIC_OPS_COUNT {
                     let old_val = atom.fetch_and(AND_MASK, Ordering::Relaxed);
@@ -281,19 +208,19 @@ mod tests {
                     assert!((old_val & OR_MASK == OR_MASK) || (old_val & OR_MASK == 0));
                 }
             },
-            move || {
+            || {
                 // ...another runs fetch-ors in a loop...
                 for _ in 1..=ATOMIC_OPS_COUNT {
-                    let old_val = atom2.fetch_or(OR_MASK, Ordering::Relaxed);
+                    let old_val = atom.fetch_or(OR_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
                     assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
                     assert!((old_val & OR_MASK == OR_MASK) || (old_val & OR_MASK == 0));
                 }
             },
-            move || {
+            || {
                 // ...and the last one runs fetch-xors in a loop...
                 for _ in 1..=ATOMIC_OPS_COUNT {
-                    let old_val = atom3.fetch_xor(XOR_MASK, Ordering::Relaxed);
+                    let old_val = atom.fetch_xor(XOR_MASK, Ordering::Relaxed);
                     assert_eq!(old_val & 0b1111_1111_1111_1111, old_val);
                     assert!((old_val & XOR_MASK == XOR_MASK) || (old_val & XOR_MASK == 0));
                     assert!((old_val & OR_MASK == OR_MASK) || (old_val & OR_MASK == 0));
@@ -301,44 +228,15 @@ mod tests {
             },
         );
     }
-}
 
-/// Exemples of benchmarking code
-///
-/// As discussed before, these should be run via the following command:
-///
-///   $ cargo test --release -- --ignored --nocapture --test-threads=1
-#[cfg(test)]
-mod benchs {
-    use std::sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    };
-
-    // Benchmark relaxed atomics in sequential code (best case)
+    // Show how adversarial code is actually run in concurrent "benchmarking"
     #[test]
-    #[ignore]
-    fn bench_relaxed() {
+    fn antagonist_showcase() {
         let atom = AtomicUsize::new(0);
-        crate::benchmark(930_000_000, || {
-            atom.fetch_add(1, Ordering::Relaxed);
-        });
-    }
-
-    // Benchmark sequentially consistent atomics in concurrent code (worst case)
-    #[test]
-    #[ignore]
-    fn bench_seqcst() {
-        let atom = Arc::new(AtomicUsize::new(0));
-        let atom2 = atom.clone();
-        crate::concurrent_benchmark(
-            110_000_000,
-            move || {
-                atom.fetch_add(1, Ordering::SeqCst);
-            },
-            move || {
-                atom2.fetch_add(1, Ordering::SeqCst);
-            },
+        super::run_under_contention(
+            || atom.fetch_add(1, Ordering::Relaxed),
+            || std::thread::sleep(Duration::from_millis(100)),
         );
+        assert!(atom.load(Ordering::Relaxed) > 100000);
     }
 }
