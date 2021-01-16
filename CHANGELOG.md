@@ -23,6 +23,7 @@ _No unreleased changes in the pipeline at the moment._
   the need for Arc'ing shared data.
 - Since criterion has become good enough these days, this crate does not provide
   benchmarking tools anymore aside from the aforementioned one.
+- We now require Rust v1.36 because crossbeam does.
 
 
 ## [0.7.3] - 2020-03-15
