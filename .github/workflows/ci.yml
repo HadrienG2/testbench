@@ -148,6 +148,7 @@ jobs:
         rust:
           - beta
           - nightly
+          - 1.36.0  # Minimum supported Rust version (can be changed by deps)
 
     steps:
       - name: Checkout sources
