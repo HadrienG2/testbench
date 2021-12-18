@@ -22,6 +22,7 @@ keywords = [ "testing", "benchmarking", "multithreading", "concurrent" ]
 categories = [ "concurrency", "development-tools" ]
 license = "MPL-2.0"
 edition = "2018"
+rust-version = "1.36.0"
 
 [badges]
 maintenance = { status = "passively-maintained" }
