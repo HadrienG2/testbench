@@ -12,7 +12,7 @@ name = "testbench"
 # - Cargo publish.
 # - Add a github release
 #
-version = "0.8.1"
+version = "0.9.0"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 description = "Testing and benchmarking tools for concurrent Rust code"
 documentation = "https://docs.rs/testbench/"
@@ -22,10 +22,10 @@ keywords = [ "testing", "benchmarking", "multithreading", "concurrent" ]
 categories = [ "concurrency", "development-tools" ]
 license = "MPL-2.0"
 edition = "2018"
-rust-version = "1.36.0"
+rust-version = "1.38.0"
 
 [badges]
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-crossbeam-utils = "<0.8.11"
+crossbeam-utils = "0.8"
