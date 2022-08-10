@@ -12,7 +12,7 @@ name = "testbench"
 # - Cargo publish.
 # - Add a github release
 #
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 description = "Testing and benchmarking tools for concurrent Rust code"
 documentation = "https://docs.rs/testbench/"
@@ -28,4 +28,4 @@ rust-version = "1.36.0"
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-crossbeam-utils = "0.8"
+crossbeam-utils = "<0.8.11"
