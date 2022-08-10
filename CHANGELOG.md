@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _No unreleased changes in the pipeline at the moment._
 
 
+## [0.8.1] - 2022-08-10
+
+### Fixed
+
+- Pin crossbeam release to keep compatibility with rustc 1.36.
+
+
 ## [0.8] - 2021-01-16
 
 ### Added
@@ -167,8 +174,9 @@ _No unreleased changes in the pipeline at the moment._
 
 
 
-[Unreleased]: https://github.com/HadrienG2/testbench/compare/v0.8.0...HEAD
-[0.7.3]: https://github.com/HadrienG2/testbench/compare/v0.7.3...v0.8.0
+[Unreleased]: https://github.com/HadrienG2/testbench/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/HadrienG2/testbench/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/HadrienG2/testbench/compare/v0.7.3...v0.8.0
 [0.7.3]: https://github.com/HadrienG2/testbench/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/HadrienG2/testbench/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/HadrienG2/testbench/compare/v0.7.0...v0.7.1
