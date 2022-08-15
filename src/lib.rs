@@ -31,7 +31,6 @@
 pub mod noinline;
 pub mod race_cell;
 
-use crossbeam_utils::thread;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Barrier,
@@ -55,15 +54,14 @@ use std::sync::{
 ///
 pub fn concurrent_test_2(f1: impl FnOnce() + Send, f2: impl FnOnce() + Send) {
     let barrier = Barrier::new(2);
-    thread::scope(|s| {
-        s.spawn(|_| {
+    std::thread::scope(|s| {
+        s.spawn(|| {
             barrier.wait();
             noinline::call_once(f1);
         });
         barrier.wait();
         noinline::call_once(f2);
     })
-    .expect("Failed to join thread running f1");
 }
 
 /// Test that running three operations concurrently works
@@ -82,19 +80,18 @@ pub fn concurrent_test_3(
     f3: impl FnOnce() + Send,
 ) {
     let barrier = Barrier::new(3);
-    thread::scope(|s| {
-        s.spawn(|_| {
+    std::thread::scope(|s| {
+        s.spawn(|| {
             barrier.wait();
             noinline::call_once(f1);
         });
-        s.spawn(|_| {
+        s.spawn(|| {
             barrier.wait();
             noinline::call_once(f2);
         });
         barrier.wait();
         noinline::call_once(f3);
     })
-    .expect("Failed to join threads running f1 and f2");
 }
 
 /// Perform some operation while another is running in a loop in another thread
@@ -126,8 +123,8 @@ pub fn run_under_contention<AntagonistResult, BenchmarkResult>(
 ) -> BenchmarkResult {
     let start_barrier = Barrier::new(2);
     let continue_flag = AtomicBool::new(true);
-    thread::scope(|s| {
-        s.spawn(|_| {
+    std::thread::scope(|s| {
+        s.spawn(|| {
             start_barrier.wait();
             while continue_flag.load(Ordering::Relaxed) {
                 antagonist();
@@ -138,7 +135,6 @@ pub fn run_under_contention<AntagonistResult, BenchmarkResult>(
         continue_flag.store(false, Ordering::Relaxed);
         result
     })
-    .expect("Failed to join antagonist thread")
 }
 
 /// Examples of concurrent testing code

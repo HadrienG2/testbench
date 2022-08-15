@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _No unreleased changes in the pipeline at the moment._
 
 
+## [1.0.0] - 2022-08-15
+
+### Changed
+
+- Switch from crossbeam scoped threads to std scoped threads. This bumps our
+  `rustc` requirements all the way up to the latest release (v1.63), but has the
+  great advantage that we are no longer bound by the ever shifting rustc
+  requirements of crossbeam, so this requirement can stay indefinitely.
+
+
 ## [0.9.0] - 2022-08-10
 
 ### Changed
@@ -181,8 +191,9 @@ _No unreleased changes in the pipeline at the moment._
 
 
 
-[Unreleased]: https://github.com/HadrienG2/testbench/compare/v0.9.0...HEAD
-[0.8.1]: https://github.com/HadrienG2/testbench/compare/v0.8.1...v0.9.0
+[Unreleased]: https://github.com/HadrienG2/testbench/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/HadrienG2/testbench/compare/v0.9.0...v1.0.0
+[0.9.0]: https://github.com/HadrienG2/testbench/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/HadrienG2/testbench/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/HadrienG2/testbench/compare/v0.7.3...v0.8.0
 [0.7.3]: https://github.com/HadrienG2/testbench/compare/v0.7.2...v0.7.3
