@@ -57,7 +57,7 @@ jobs:
 
 
   # Run the tests on all supported OSes and stable Rust versions (main CI)
-  test-pr:
+  test-contrib:
     if: github.event_name != 'schedule'
 
     runs-on: ${{ matrix.os }}
