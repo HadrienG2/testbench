@@ -27,6 +27,10 @@ jobs:
   # Formatter output and lints don't depend on the operating system, and only
   # need to be tested on the latest supported release of each CI run.
   check:
+    # Only run on "pull_request" event for external PRs. This is to avoid
+    # duplicate builds for PRs created from internal branches.
+    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event.pull_request.head.repo.full_name != github.repository
+    
     runs-on: ubuntu-latest
 
     steps:
@@ -58,7 +62,9 @@ jobs:
 
   # Run the tests on all supported OSes and stable Rust versions (main CI)
   test-contrib:
-    if: github.event_name != 'schedule'
+    # Only run on "pull_request" event for external PRs. This is to avoid
+    # duplicate builds for PRs created from internal branches.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
     runs-on: ${{ matrix.os }}
 
