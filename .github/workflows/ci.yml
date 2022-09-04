@@ -33,55 +33,31 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Cache stable toolchain and target directory
+      - name: Set up stable toolchain
         if: github.event_name != 'schedule'
-        uses: actions/cache@v3
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          path: |
-            ~/.rustup/settings.toml
-            ~/.rustup/toolchains/stable-*
-            ~/.rustup/update-hashes/stable-*
-            target
-          key: check
-
-      - name: Install stable toolchain
-        if: github.event_name != 'schedule'
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt,clippy
 
-      - name: Install nightly toolchain
+      - name: Set up nightly toolchain
         if: github.event_name == 'schedule'
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
           components: rustfmt,clippy
 
       - name: Check format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        uses: actions-rust-lang/rustfmt@v1
 
       - name: Type-check the program
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
+        run: cargo check
 
       - name: Check clippy lints
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+        run: cargo clippy -- -D warnings
 
 
   # Run the tests on all supported OSes and stable Rust versions (main CI)
-  test-stable:
+  test-contrib:
     if: github.event_name != 'schedule'
 
     runs-on: ${{ matrix.os }}
@@ -100,41 +76,24 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Cache toolchain and target directory
-        uses: actions/cache@v3
+      - name: Set up toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          path: |
-            ~/.rustup/settings.toml
-            ~/.rustup/toolchains/${{ matrix.rust }}-*
-            ~/.rustup/update-hashes/${{ matrix.rust }}-*
-            target
-          key: test-${{ matrix.os }}-${{ matrix.rust }}
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
 
       - name: Run basic tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+        run: cargo test
 
       - name: Run concurrent tests and benchmarks
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release -- --ignored --nocapture --test-threads=1
+        run: cargo test --release -- --ignored --nocapture --test-threads=1
 
 
-  # Run the tests on upcoming Rust versions (scheduled CI)
+  # Check compatibility with newer Rust/deps versions (scheduled CI)
   #
   # FIXME: There should be a way to use conditional build matrices without
   #        duplicating the whole job recipe...
   #
-  test-unstable:
+  test-scheduled:
     if: github.event_name == 'schedule'
 
     runs-on: ${{ matrix.os }}
@@ -154,20 +113,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Set up toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
 
       - name: Run basic tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+        run: cargo test
 
       - name: Run concurrent tests and benchmarks
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release -- --ignored --nocapture --test-threads=1
+        run: cargo test --release -- --ignored --nocapture --test-threads=1
