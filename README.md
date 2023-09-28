@@ -1,9 +1,10 @@
 # Testing & benchmarking tools for concurrent Rust code
 
+[![MPLv2 licensed](https://img.shields.io/badge/license-MPLv2-blue.svg)](./LICENSE)
 [![On crates.io](https://img.shields.io/crates/v/testbench.svg)](https://crates.io/crates/testbench)
 [![On docs.rs](https://docs.rs/testbench/badge.svg)](https://docs.rs/testbench/)
-[![Continuous Integration](https://github.com/HadrienG2/testbench/workflows/Continuous%20Integration/badge.svg)](https://github.com/HadrienG2/testbench/actions?query=workflow%3A%22Continuous+Integration%22)
-![Requires rustc 1.63+](https://img.shields.io/badge/rustc-1.63+-red.svg)
+[![Continuous Integration](https://img.shields.io/github/actions/workflow/status/HadrienG2/testbench/ci.yml?branch=master)](https://github.com/HadrienG2/testbench/actions?query=workflow%3A%22Continuous+Integration%22)
+![Requires rustc 1.63.0+](https://img.shields.io/badge/rustc-1.63.0+-lightgray.svg)
 
 ## What is this?
 
