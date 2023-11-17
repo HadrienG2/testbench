@@ -248,8 +248,8 @@ mod tests {
     #[test]
     fn initial_state() {
         let cell = RaceCell::new(true);
-        assert_eq!(cell.local_contents.relaxed_load(), true);
-        assert_eq!(cell.remote_version.relaxed_load(), true);
+        assert!(cell.local_contents.relaxed_load());
+        assert!(cell.remote_version.relaxed_load());
     }
 
     /// Reading a consistent RaceCell should work as expected
