@@ -216,7 +216,7 @@ impl_atomic_data! {
 impl<V> AtomicData for *mut V {
     type AtomicWrapper = AtomicPtr<V>;
 }
-///
+//
 impl<V> AtomicLoadStore for AtomicPtr<V> {
     type Content = *mut V;
 
