@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _No unreleased changes in the pipeline at the moment._
 
 
+## [1.0.1] - 2025-05-04
+
+### Changed
+
+- Switched to 2021 edition as MSRV now allows it
+- Added lockfile to avoid suprise MSRV breakage
+
+
 ## [1.0.0] - 2022-08-15
 
 ### Changed
@@ -191,7 +199,8 @@ _No unreleased changes in the pipeline at the moment._
 
 
 
-[Unreleased]: https://github.com/HadrienG2/testbench/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/HadrienG2/testbench/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/HadrienG2/testbench/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/HadrienG2/testbench/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/HadrienG2/testbench/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/HadrienG2/testbench/compare/v0.8.0...v0.8.1
