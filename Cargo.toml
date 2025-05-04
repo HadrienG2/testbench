@@ -7,10 +7,10 @@ name = "testbench"
 # - Cross-check all public API documentation, update as needed.
 # - Update changelog.
 # - Update version number in Cargo.toml
-# - Roll an annotated git tag
-# - Push it, make sure both the tag and master pass CI.
-# - Cargo publish.
-# - Add a github release
+# - Make a branch and push it, create a PR with auto-merge on CI success
+# - Cargo publish
+# - Roll an annotated git tag mimicking changelog
+# - Create a matching github release
 #
 version = "1.0.1"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
