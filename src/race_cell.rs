@@ -309,7 +309,7 @@ mod tests {
                         Racey::Inconsistent => data_race_count += 1,
                     }
                 }
-                print!("{} races detected: ", data_race_count);
+                println!("{data_race_count} races detected");
                 assert!(data_race_count > WRITES_COUNT / 100);
             },
         );
