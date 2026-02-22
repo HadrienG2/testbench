@@ -6,6 +6,8 @@
 #   compatible and lint-free on upcoming Rust toolchains (beta and nightly).
 
 name: Continuous Integration
+permissions:
+  contents: read
 
 on:
   push:
@@ -42,7 +44,7 @@ jobs:
   format-lints:
     # Don't run CI twice when a PR is created from a branch internal to the repo
     if: github.event_name == 'push' || github.event_name == 'schedule' || github.event.pull_request.head.repo.full_name != github.repository
-    
+
     runs-on: ubuntu-latest
 
     steps:
